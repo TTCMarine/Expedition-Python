@@ -2,8 +2,13 @@
 
 ## Description
 
-Expedition is a Python module for managing and manipulating expeditions. It provides a simple and intuitive API for
-creating, updating, and retrieving expedition data.
+Expedition is a Windows-based software application for sailing navigation and racing. It has been used in multiple Volvo
+Ocean Race, America's Cup and Grand Prix events and is the most advanced and usable software available. It can be
+purchased from [Expedition Marine](https://www.expeditionmarine.com/).
+
+This Expedition-Python library is a module for reading and writing data from Expedition. It provides a simple and
+intuitive API for reading and writing variables and system variables in Expedition. You can also do basic route and
+waypoint manipulation.
 
 ## Installation
 
@@ -52,5 +57,3 @@ python -m unittest discover tests
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```

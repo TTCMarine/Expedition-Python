@@ -1,7 +1,5 @@
 import winreg
 import ctypes
-import os
-import sys
 from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
 from typing import List, Tuple, Union
 from .enums import Var, SysVar, SysBooleanVar
@@ -41,24 +39,7 @@ class ExpeditionDLL:
         :param exp_install_dir: The directory where Expedition is installed (e.g. C:\Program Files (x86)\Expedition)
         """
         self.exp_install_dir = exp_install_dir
-
-        # add the expedition directory to the system path
-        sys.path.insert(0, self.exp_install_dir)
-
-        # set the python working directory to the expedition directory
-        os.chdir(exp_install_dir)
-
-        # set the PYTHONPATH environment variable to the expedition directory
-        os.environ['PYTHONPATH'] = exp_install_dir
-
-        # set the PATH environment variable to the expedition directory
-        os.environ['PATH'] = exp_install_dir + ';' + os.environ['PATH']
-
-        # set the PYTHONHOME environment variable to the expedition directory
-        os.environ['PYTHONHOME'] = exp_install_dir
-
         dll_path = exp_install_dir + r'\ExpDLL.dll'
-
         self.exp_dll = ctypes.CDLL(dll_path)
 
         # Define return types and argument types for the functions
