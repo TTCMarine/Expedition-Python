@@ -36,6 +36,10 @@ class ExpeditionDLL:
         return ExpeditionDLL(expedition_location)
 
     def __init__(self, exp_install_dir):
+        """
+        Create an instance of the ExpeditionDLL class
+        :param exp_install_dir: The directory where Expedition is installed (e.g. C:\Program Files (x86)\Expedition)
+        """
         self.exp_install_dir = exp_install_dir
 
         # add the expedition directory to the system path
