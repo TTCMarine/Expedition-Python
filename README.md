@@ -15,7 +15,7 @@ waypoint manipulation.
 To install the Expedition module, you can use pip:
 
 ```bash
-pip install Expedition
+pip install Expedition-Python
 ```
 
 ## Usage
