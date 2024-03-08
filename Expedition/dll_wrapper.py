@@ -1,7 +1,8 @@
 import winreg
 import ctypes
+import os
 from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 from .enums import Var, SysVar, SysBooleanVar
 
 
@@ -36,10 +37,11 @@ class ExpeditionDLL:
     def __init__(self, exp_install_dir):
         """
         Create an instance of the ExpeditionDLL class
-        :param exp_install_dir: The directory where Expedition is installed (e.g. C:\Program Files (x86)\Expedition)
+        :param exp_install_dir: The directory where Expedition is installed (e.g. C:\\Program Files (x86)\\Expedition)
         """
         self.exp_install_dir = exp_install_dir
-        dll_path = exp_install_dir + r'\ExpDLL.dll'
+        dll_name = 'ExpDLL.dll'
+        dll_path = os.path.join(exp_install_dir, dll_name)
         self.exp_dll = ctypes.CDLL(dll_path)
 
         # Define return types and argument types for the functions
@@ -109,6 +111,19 @@ class ExpeditionDLL:
         """
         self.exp_dll.SetExpVar(c_int16(var), c_double(value), c_uint16(boat))
 
+    def set_exp_var_by_name(self, name: str, value: float, boat=0):
+        """
+        Set the value of an Expedition variable by name
+        :param name: the name of the variable
+        :param value: the value to set
+        :param boat: the boat number to set the variable for (default 0)
+        """
+        try:
+            var_id = Var[name]
+        except KeyError:
+            raise ValueError(f"Variable name '{name}' not found")
+        self.exp_dll.SetExpVar(c_int16(var_id), c_double(value), c_uint16(boat))
+
     def get_exp_var_value(self, var: Var, boat=0):
         """
         Get the value of an Expedition variable
@@ -118,6 +133,18 @@ class ExpeditionDLL:
         """
         value = c_double()
         self.exp_dll.GetExpVar(c_int16(var), ctypes.byref(value), c_uint16(boat), None)
+        return value.value
+
+    def get_exp_var_value_by_name(self, name: str, boat=0):
+        """
+        Get the value of an Expedition variable by name
+        :param name: the name of the variable
+        :param boat: the boat number to get the variable for (default 0)
+        :return: value of the variable
+        """
+        var_id = Var[name]
+        value = c_double()
+        self.exp_dll.GetExpVar(c_int16(var_id), ctypes.byref(value), c_uint16(boat), None)
         return value.value
 
     def set_exp_vars(self, var_list: List[Var], value_list: List[float], boat=0):
@@ -145,6 +172,27 @@ class ExpeditionDLL:
         value_array = (c_double * len(var_list))()
         self.exp_dll.GetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
         return list(value_array)
+
+    def set_exp_vars_dict(self, var_dict: Dict[Var, float], boat=0):
+        """
+        Set the values of a dictionary of Expedition variables
+        :param var_dict: dictionary of variables to set
+        :param boat: boat number to set the variables for (default 0)
+        :return: None
+        """
+        var_list = list(var_dict.keys())
+        value_list = list(var_dict.values())
+        self.set_exp_vars(var_list, value_list, boat)
+
+    def get_exp_vars_dict(self, var_list: List[Var], boat=0) -> Dict[Var, float]:
+        """
+        Get the values of a list of Expedition variables
+        :param var_list: list of variables to get
+        :param boat: boat number to get the variables for (default 0)
+        :return: dictionary of values
+        """
+        values = self.get_exp_vars(var_list, boat)
+        return dict(zip(var_list, values))
 
     def get_sys_var(self, var: SysVar) -> float:
         """

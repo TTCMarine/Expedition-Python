@@ -1,10 +1,18 @@
 import unittest
+import platform
 from Expedition import ExpeditionDLL, Var, SysVar
+
+EXPEDITION_INSTALL_64_PATH = "C:\\Program Files\\Expedition\\Expedition"
+EXPEDITION_INSTALL_32_PATH = "C:\\Program Files (x86)\\Expedition\\Expedition4D"
 
 
 class TestExpedition(unittest.TestCase):
     def setUp(self):
-        self.expedition = ExpeditionDLL.from_default_location()
+        architecture = platform.architecture()[0]
+        if architecture == "64bit":
+            self.expedition = ExpeditionDLL(EXPEDITION_INSTALL_64_PATH)
+        else:
+            self.expedition = ExpeditionDLL(EXPEDITION_INSTALL_32_PATH)
 
     def test_number_of_vars(self):
         no_of_channels = self.expedition.number_of_vars
@@ -43,6 +51,20 @@ class TestExpedition(unittest.TestCase):
         self.expedition.set_boat_position(0, (50.8, -1.3))
         position = self.expedition.get_boat_position(0)
         self.assertEqual(position, (50.8, -1.3))
+
+    def test_set_by_name(self):
+        self.expedition.set_exp_var_by_name("Lat", 50.7)
+        value = self.expedition.get_exp_var_value(Var.Lat)
+        self.assertEqual(value, 50.7)
+
+    def test_set_by_name_error(self):
+        with self.assertRaises(ValueError):
+            self.expedition.set_exp_var_by_name("Invalid", 50.7)
+
+    def test_get_by_name(self):
+        self.expedition.set_exp_var_value(Var.Lon, -1.3)
+        value = self.expedition.get_exp_var_value_by_name("Lon")
+        self.assertEqual(value, -1.3)
 
 
 if __name__ == '__main__':
