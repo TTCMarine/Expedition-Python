@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Expedition-Python',
-    version='1.0.2',
+    version='1.0.3',
     author='Tom Cheney',
     author_email='tom@ttcmarine.com',
     description='Python wrapper for the Expedition DLL',

@@ -287,7 +287,7 @@ class Var(IntEnum):
     NextMarkTimeOnStrb = auto()
     Xte = auto()
     Vmc = auto()
-    MagVar2 = auto()
+    MagVar = auto()
     Gwd = auto()
     Gws = auto()
     LayDist = auto()  # distance to layline we are heading to
