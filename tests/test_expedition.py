@@ -66,6 +66,13 @@ class TestExpedition(unittest.TestCase):
         value = self.expedition.get_exp_var_value_by_name("Lon")
         self.assertEqual(value, -1.3)
 
+    def test_set_dict(self):
+        self.expedition.set_exp_vars_dict({Var.Lat: 50.8, Var.Lon: -1.4})
+        lat = self.expedition.get_exp_var_value(Var.Lat)
+        lon = self.expedition.get_exp_var_value(Var.Lon)
+        self.assertEqual(lat, 50.8)
+        self.assertEqual(lon, -1.4)
+
 
 if __name__ == '__main__':
     unittest.main()
