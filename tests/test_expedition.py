@@ -3,7 +3,7 @@ import platform
 from Expedition import ExpeditionDLL, Var, SysVar
 
 EXPEDITION_INSTALL_64_PATH = "C:\\Program Files\\Expedition\\Expedition"
-EXPEDITION_INSTALL_32_PATH = "C:\\Program Files (x86)\\Expedition\\Expedition4D"
+EXPEDITION_INSTALL_32_PATH = "C:\\Program Files (x86)\\Expedition\\Expedition"
 
 
 class TestExpedition(unittest.TestCase):
@@ -17,6 +17,7 @@ class TestExpedition(unittest.TestCase):
     def test_number_of_vars(self):
         no_of_channels = self.expedition.number_of_vars
         self.assertIsInstance(no_of_channels, int)
+        self.assertEqual(no_of_channels, Var.NumChannels)
 
     def test_get_exp_var_name(self):
         for i in range(self.expedition.number_of_vars):
@@ -31,7 +32,7 @@ class TestExpedition(unittest.TestCase):
     def test_set_and_get_exp_user_var_name(self):
         self.expedition.set_exp_user_var_name(Var.User0, "User Var 0")
         name = self.expedition.get_exp_var_name(Var.User0)
-        self.assertEqual(name, "User Var 0")
+        self.assertEqual("User Var 0", name)
 
     def test_set_and_get_exp_vars(self):
         self.expedition.set_exp_vars([Var.User0, Var.User1, Var.User2], [0, 1, 2])
@@ -72,6 +73,11 @@ class TestExpedition(unittest.TestCase):
         lon = self.expedition.get_exp_var_value(Var.Lon)
         self.assertEqual(lat, 50.8)
         self.assertEqual(lon, -1.4)
+
+    @unittest.skip("Disabled for now, magvar not working as expected")
+    def test_get_variation(self):
+        variation = self.expedition.get_variation(50.8, -1.3)
+        self.assertIsInstance(variation, float)
 
 
 if __name__ == '__main__':

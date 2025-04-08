@@ -1,8 +1,9 @@
 import winreg
 import ctypes
 import os
+from datetime import datetime, UTC
 from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 from .enums import Var, SysVar, SysBooleanVar
 
 
@@ -42,7 +43,9 @@ class ExpeditionDLL:
         self.exp_install_dir = exp_install_dir
         dll_name = 'ExpDLL.dll'
         dll_path = os.path.join(exp_install_dir, dll_name)
-        self.exp_dll = ctypes.CDLL(dll_path)
+        if not os.path.exists(dll_path):
+            raise FileNotFoundError(f"Could not find {dll_name} in {exp_install_dir}")
+        self.exp_dll = ctypes.windll.LoadLibrary(dll_path)
 
         # Define return types and argument types for the functions
         self.exp_dll.GetExpVarNum.argtypes = [POINTER(c_int16)]
@@ -59,6 +62,7 @@ class ExpeditionDLL:
         self.exp_dll.GetBoatColour.argtypes = [c_uint16, POINTER(c_uint16), POINTER(c_uint16), POINTER(c_uint16)]
         self.exp_dll.SetBoatColour.argtypes = [c_uint16, c_uint16, c_uint16, c_uint16]
         self.exp_dll.GetVariation.argtypes = [ctypes.c_double, c_double, c_double, POINTER(c_double)]
+        self.exp_dll.GetVariation.restype = c_bool
         self.exp_dll.GetAisDangerousCPA.argtypes = [POINTER(c_bool), ctypes.c_wchar_p]
         self.exp_dll.SetMOB.argtypes = [c_double, c_double]
         self.exp_dll.PingMark.argtypes = [c_char_p, c_double, c_double, c_bool]
@@ -319,15 +323,30 @@ class ExpeditionDLL:
                                           c_double(lat), c_double(lon),
                                           c_bool(locked), c_bool(save))
 
-    def get_variation(self, date: float, lat: float, lon: float) -> float:
+    def get_variation(self, lat: float, lon: float, date: Optional[datetime] = None) -> Optional[float]:
         """
         Get the variation at a position
-        :param date: date
         :param lat: latitude
         :param lon: longitude
+        :param date: date
         :return: variation
         """
-        variation = c_double()
-        self.exp_dll.GetVariation(c_double(date), c_double(lat), c_double(lon), ctypes.byref(variation))
-        return variation.value
+        if date is None:
+            date = datetime.now(UTC)
 
+        # Windows epoch: January 1, 1601
+        windows_epoch = datetime(1601, 1, 1, tzinfo=UTC)
+
+        # Calculate the difference in days between the current time and the Windows epoch
+        delta = date - windows_epoch
+
+        # Convert the difference to the number of days (including fractional part for time of day)
+        windows_date = delta.days + delta.seconds / 86400.0  # 86400 seconds in a day
+
+        # initialize variation to 0
+        variation = c_double(0)
+        success = self.exp_dll.GetVariation(c_double(windows_date), c_double(lat), c_double(lon), ctypes.byref(variation))
+        if success:
+            return variation.value
+        else:
+            return None
