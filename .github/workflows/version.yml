@@ -44,6 +44,8 @@ jobs:
 
       - name: Commit version change and create tag
         run: |
+          git config --global user.email "github-actions@github.com"  # Set the email for GitHub Actions bot
+          git config --global user.name "GitHub Actions"  # Set the name for GitHub Actions bot
           git add Expedition/version.py
           git commit -m "Bump version to ${{ env.next_version }}"
           git tag ${{ env.next_version }}
