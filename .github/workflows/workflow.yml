@@ -26,12 +26,54 @@ jobs:
         with:
           python-version: "3.x"
 
+      # Extract base version (major.minor) from Expedition/version.py
+      - name: Get base version
+          id: get_base
+          run: |
+            content=$(<Expedition/version.py)
+            if [[ "$content" =~ __version__\ *=\ *\"([0-9]+)\.([0-9]+)\.[0-9]+\" ]]; then
+              base="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+              echo "base_version=$base" >> $GITHUB_ENV
+            else
+              echo "Could not extract base version" >&2
+              exit 1
+            fi
+
+      # Determine next patch version
+      - name: Get next version tag
+        id: get_version
+        run: |
+          base="${{ env.base_version }}"
+          tags=$(git tag --sort=-v:refname | grep "^v$base\.[0-9]\+$" || true)
+          if [ -z "$tags" ]; then
+            patch=0
+          else
+            latest=$(echo "$tags" | head -n1)
+            patch=$(( ${latest##*.} + 1 ))
+          fi
+          next="v$base.$patch"
+          echo "next_version=$next" >> $GITHUB_ENV
+          echo "tag_name=$next" >> $GITHUB_OUTPUT
+
+      # Write full version into Expedition/version.py
+      - name: Write final version into version.py
+        run: |
+          echo "__version__ = \"${{ env.next_version#v }}\"" > Expedition/version.py
+
+      # Check that version matches tag
+      - name: Sanity check version.py
+        run: |
+          grep "__version__ = " Expedition/version.py
+          cat Expedition/version.py
+
+      # 🧱 Build
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
 
+      # 🚀 Upload Distributions
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
