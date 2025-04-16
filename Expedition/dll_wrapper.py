@@ -53,10 +53,14 @@ class ExpeditionDLL:
         self.exp_dll.SetExpUserVarName.argtypes = [c_int16, ctypes.c_char_p]
         self.exp_dll.SetExpVar.argtypes = [c_int16, c_double, c_uint16]
         self.exp_dll.GetExpVar.argtypes = [c_int16, POINTER(c_double), c_uint16, POINTER(c_int16)]
+        self.exp_dll.GetExpVar.restype = c_bool
         self.exp_dll.SetExpVars.argtypes = [POINTER(c_int16), POINTER(c_double), c_int16, c_uint16]
         self.exp_dll.GetExpVars.argtypes = [POINTER(c_int16), POINTER(c_double), c_int16, c_uint16]
+        self.exp_dll.GetExpVars.restype = c_bool
         self.exp_dll.GetSysVar.argtypes = [c_int16, POINTER(c_double)]
+        self.exp_dll.GetSysVar.restype = c_bool
         self.exp_dll.GetSysBool.argtypes = [c_int16, POINTER(c_bool)]
+        self.exp_dll.GetSysBool.restype = c_bool
         self.exp_dll.GetBoatNum.argtypes = [POINTER(c_int16)]
         self.exp_dll.SetBoatName.argtypes = [c_uint16, c_char_p]
         self.exp_dll.GetBoatColour.argtypes = [c_uint16, POINTER(c_uint16), POINTER(c_uint16), POINTER(c_uint16)]
@@ -128,7 +132,7 @@ class ExpeditionDLL:
             raise ValueError(f"Variable name '{name}' not found")
         self.exp_dll.SetExpVar(c_int16(var_id), c_double(value), c_uint16(boat))
 
-    def get_exp_var_value(self, var: Var, boat=0):
+    def get_exp_var_value(self, var: Var, boat=0) -> Optional[float]:
         """
         Get the value of an Expedition variable
         :param var: enumeration of the variable
@@ -136,8 +140,11 @@ class ExpeditionDLL:
         :return: value of the variable
         """
         value = c_double()
-        self.exp_dll.GetExpVar(c_int16(var), ctypes.byref(value), c_uint16(boat), None)
-        return value.value
+        valid = self.exp_dll.GetExpVar(c_int16(var), ctypes.byref(value), c_uint16(boat), None)
+        if valid:
+            return value.value
+        else:
+            return None
 
     def get_exp_var_value_by_name(self, name: str, boat=0):
         """
@@ -165,7 +172,7 @@ class ExpeditionDLL:
         value_array = (c_double * len(value_list))(*value_list)
         self.exp_dll.SetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
 
-    def get_exp_vars(self, var_list: List[Var], boat=0) -> List[float]:
+    def get_exp_vars(self, var_list: List[Var], boat=0) -> Optional[List[float]]:
         """
         Get the values of a list of Expedition variables
         :param var_list: list of variables to get
@@ -174,8 +181,11 @@ class ExpeditionDLL:
         """
         var_array = (c_int16 * len(var_list))(*var_list)
         value_array = (c_double * len(var_list))()
-        self.exp_dll.GetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
-        return list(value_array)
+        valid = self.exp_dll.GetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
+        if valid:
+            return list(value_array)
+        else:
+            return None
 
     def set_exp_vars_dict(self, var_dict: Dict[Var, float], boat=0):
         """
@@ -188,7 +198,7 @@ class ExpeditionDLL:
         value_list = list(var_dict.values())
         self.set_exp_vars(var_list, value_list, boat)
 
-    def get_exp_vars_dict(self, var_list: List[Var], boat=0) -> Dict[Var, float]:
+    def get_exp_vars_dict(self, var_list: List[Var], boat=0) -> Optional[Dict[Var, float]]:
         """
         Get the values of a list of Expedition variables
         :param var_list: list of variables to get
@@ -196,27 +206,36 @@ class ExpeditionDLL:
         :return: dictionary of values
         """
         values = self.get_exp_vars(var_list, boat)
-        return dict(zip(var_list, values))
+        if values:
+            return dict(zip(var_list, values))
+        else:
+            return None
 
-    def get_sys_var(self, var: SysVar) -> float:
+    def get_sys_var(self, var: SysVar) -> Optional[float]:
         """
         Get the value of a system variable
         :param var: system variable enumeration
         :return: value
         """
         value = c_double()
-        self.exp_dll.GetSysVar(c_int16(var), ctypes.byref(value))
-        return value.value
+        valid = self.exp_dll.GetSysVar(c_int16(var), ctypes.byref(value))
+        if valid:
+            return value.value
+        else:
+            return None
 
-    def get_sys_bool(self, var: SysBooleanVar) -> bool:
+    def get_sys_bool(self, var: SysBooleanVar) -> Optional[bool]:
         """
         Get the value of a system boolean variable
         :param var: system boolean variable enumeration
         :return: value
         """
         value = c_bool()
-        self.exp_dll.GetSysBool(c_int16(var), ctypes.byref(value))
-        return value.value
+        valid = self.exp_dll.GetSysBool(c_int16(var), ctypes.byref(value))
+        if valid:
+            return value.value
+        else:
+            return None
 
     def get_number_of_boats(self) -> int:
         """

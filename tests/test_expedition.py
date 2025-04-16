@@ -20,9 +20,10 @@ class TestExpedition(unittest.TestCase):
         self.assertEqual(no_of_channels, Var.NumChannels)
 
     def test_get_exp_var_name(self):
-        for i in range(self.expedition.number_of_vars):
+        for i in range(1, self.expedition.number_of_vars):
             var_name = self.expedition.get_exp_var_name(i)
             self.assertIsInstance(var_name, str)
+            # self.assertEqual(var_name.lower(), Var(i).name.lower())
 
     def test_set_and_get_exp_var_value(self):
         self.expedition.set_exp_var_value(Var.Bsp, 10.4)

@@ -176,7 +176,7 @@ class SysBooleanVar(Enum):
 
 class SysIntVar(Enum):
     """Enumeration of system integer variables."""
-    Theme = 0
+    Utc = 0
     Depth = auto()
     Speed = auto()
     Distance = auto()
@@ -202,9 +202,9 @@ class Var(IntEnum):
     Tws = auto()
     Twd = auto()
     RudderFwd = auto()
-    DeltaTargBsp = auto()
+    DTargBsp = auto()  # Delta Target Boatspeed
     Course = auto()
-    Lwy = auto()
+    Leeway = auto()
     Set = auto()
     Drift = auto()
     Hdg = auto()
@@ -212,12 +212,14 @@ class Var(IntEnum):
     SeaTemp = auto()
     Baro = auto()
     Depth = auto()  # metres
-    Roll = auto()
-    Pitch = auto()
+    Heel = auto()
+    Roll = Heel
+    Trim = auto()
+    Pitch = Trim
     Rudder = auto()
     Tab = auto()
-    ForestayLoad = auto()
-    DownhaulLoad = auto()
+    Forestay = auto()
+    Downhaul = auto()
     MastAngle = auto()
     ForestayLen = auto()
     Mast = auto()
