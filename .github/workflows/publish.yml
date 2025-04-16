@@ -1,19 +1,12 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Upload Python Package
 
 on:
   release:
-    types: [published]
+    types: [published]  # Triggered when you manually create a release
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   release-build:
@@ -26,54 +19,13 @@ jobs:
         with:
           python-version: "3.x"
 
-      # Extract base version (major.minor) from Expedition/version.py
-      - name: Get base version
-        id: get_base
-        run: |
-          content=$(<Expedition/version.py)
-          if [[ "$content" =~ __version__\ *=\ *\"([0-9]+)\.([0-9]+)\.[0-9]+\" ]]; then
-            base="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
-            echo "base_version=$base" >> $GITHUB_ENV
-          else
-            echo "Could not extract base version" >&2
-            exit 1
-          fi
-
-      # Determine next patch version
-      - name: Get next version tag
-        id: get_version
-        run: |
-          base="${{ env.base_version }}"
-          tags=$(git tag --sort=-v:refname | grep "^v$base\.[0-9]\+$" || true)
-          if [ -z "$tags" ]; then
-            patch=0
-          else
-            latest=$(echo "$tags" | head -n1)
-            patch=$(( ${latest##*.} + 1 ))
-          fi
-          next="v$base.$patch"
-          echo "next_version=$next" >> $GITHUB_ENV
-          echo "tag_name=$next" >> $GITHUB_OUTPUT
-
-      # Write full version into Expedition/version.py
-      - name: Write final version into version.py
-        run: |
-          echo "__version__ = \"${{ env.next_version#v }}\"" > Expedition/version.py
-
-      # Check that version matches tag
-      - name: Sanity check version.py
-        run: |
-          grep "__version__ = " Expedition/version.py
-          cat Expedition/version.py
-
-      # 🧱 Build
+      # Build release distributions
       - name: Build release distributions
         run: |
-          # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
 
-      # 🚀 Upload Distributions
+      # Upload Distributions
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
@@ -82,22 +34,13 @@ jobs:
 
   pypi-publish:
     runs-on: ubuntu-latest
-    needs:
-      - release-build
+    needs: release-build
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
-    # Dedicated environments with protections for publishing are strongly recommended.
-    # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
     environment:
       name: pypi
-      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
       url: https://pypi.org/project/Expedition-Python/
-      #
-      # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
-      # ALTERNATIVE: exactly, uncomment the following line instead:
-      # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
 
     steps:
       - name: Retrieve release distributions
