@@ -28,16 +28,16 @@ jobs:
 
       # Extract base version (major.minor) from Expedition/version.py
       - name: Get base version
-          id: get_base
-          run: |
-            content=$(<Expedition/version.py)
-            if [[ "$content" =~ __version__\ *=\ *\"([0-9]+)\.([0-9]+)\.[0-9]+\" ]]; then
-              base="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
-              echo "base_version=$base" >> $GITHUB_ENV
-            else
-              echo "Could not extract base version" >&2
-              exit 1
-            fi
+        id: get_base
+        run: |
+          content=$(<Expedition/version.py)
+          if [[ "$content" =~ __version__\ *=\ *\"([0-9]+)\.([0-9]+)\.[0-9]+\" ]]; then
+            base="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+            echo "base_version=$base" >> $GITHUB_ENV
+          else
+            echo "Could not extract base version" >&2
+            exit 1
+          fi
 
       # Determine next patch version
       - name: Get next version tag
