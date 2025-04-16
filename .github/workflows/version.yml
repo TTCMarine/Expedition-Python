@@ -40,7 +40,9 @@ jobs:
 
       - name: Write final version into version.py
         run: |
-          echo "__version__ = \"${{ env.next_version#v }}\"" > Expedition/version.py
+          version=${{ env.next_version }}
+          version=${version#v}  # remove leading 'v'
+          echo "__version__ = \"$version\"" > Expedition/version.py
 
       - name: Commit version change and create tag
         run: |
