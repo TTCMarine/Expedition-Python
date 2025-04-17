@@ -19,6 +19,11 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/TTCMarine/Expedition-Python',
+    project_urls={
+        "Documentation": "https://expedition-python.readthedocs.io",
+        "Source": "https://github.com/TTCMarine/Expedition-Python",
+        "Bug Tracker": "https://github.com/TTCMarine/Expedition-Python/issues",
+    },
     packages=find_packages(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
