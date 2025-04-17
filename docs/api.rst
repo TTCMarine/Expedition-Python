@@ -1,7 +1,7 @@
 API Reference
 =============
 
-.. automodule:: expedition
+.. automodule:: Expedition
    :members:
    :undoc-members:
    :show-inheritance:
