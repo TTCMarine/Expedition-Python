@@ -1,4 +1,3 @@
-import winreg
 import ctypes
 import os
 from datetime import datetime, UTC
@@ -14,6 +13,7 @@ __all__ = ['ExpeditionDLL']
 
 
 def get_expedition_location():
+    import winreg
     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, EXPEDITION_DLL_REG_KEY)
     value, _ = winreg.QueryValueEx(key, 'Location')
     return value
