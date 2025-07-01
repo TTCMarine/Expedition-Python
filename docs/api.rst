@@ -1,7 +1,18 @@
 API Reference
 =============
 
-.. automodule:: expedition
+Expedition.dll\_wrapper
+------------------------------
+
+.. automodule:: Expedition.dll_wrapper
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+Expedition.enums
+-----------------------
+
+.. automodule:: Expedition.enums
+   :members:
+   :show-inheritance:
+   :undoc-members:
