@@ -680,5 +680,7 @@ class Var(IntEnum):
     CalBrake = auto()
     CalAccel = auto()
     SailEvent = auto()
+    MouseTime = auto()
+    MouseTimePolar = auto()
 
     NumChannels = auto()  # number of channels
