@@ -18,6 +18,23 @@ To install the Expedition module, you can use pip:
 pip install Expedition-Python
 ```
 
+### Development Installation
+
+For development, you can install the package in editable mode:
+
+```bash
+git clone https://github.com/TTCMarine/Expedition-Python.git
+cd Expedition-Python
+pip install -e .
+```
+
+### Platform Support
+
+- **Windows**: Full support with the Expedition DLL
+- **macOS/Linux**: Mock implementation available for development and testing (see note below)
+
+> **Note for macOS/Linux users:** On non-Windows platforms, the package installs a mock implementation that allows you to develop and test code without the actual Expedition DLL. All methods are available but return dummy values. This is useful for developing code that will run on Windows.
+
 ## Usage
 
 There is a static method called `from_default_location` that can be used to create an instance of the ExpeditionDLL
@@ -44,15 +61,51 @@ print(value)  # Outputs: 10.4
 
 ## Contributing
 
-If you would like to contribute to the Expedition module, please submit a pull request.
+Contributions are welcome! If you would like to contribute to the Expedition module:
 
-## Tests
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests to ensure everything works
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-To run the tests for the Expedition module, you can use the following command:
+Please ensure your code follows the project's style guidelines and includes tests for new features.
+
+## Development
+
+### Requirements
+
+- Python 3.8 or higher
+- For Windows: Expedition software installed
+- For development: pytest (optional, for running tests)
+
+### Running Tests
+
+To run the tests for the Expedition module, you can use either:
 
 ```bash
+# Using unittest (built-in)
 python -m unittest discover tests
+
+# Using pytest (recommended)
+pip install pytest
+pytest tests/
 ```
+
+> **Note:** Tests require the Expedition DLL to be installed on Windows. On non-Windows platforms or when the DLL is not found, tests will be automatically skipped. This is expected behavior and allows the test suite to run on CI/CD systems without Expedition installed.
+
+### Building the Package
+
+The package uses modern Python packaging with `pyproject.toml`. To build:
+
+```bash
+pip install build
+python -m build
+```
+
+This will create distribution files in the `dist/` directory.
 
 ## License
 

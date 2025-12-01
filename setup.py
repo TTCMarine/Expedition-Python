@@ -1,34 +1,14 @@
-import re
-from setuptools import setup, find_packages
+"""
+Minimal setup.py for backward compatibility.
 
-# Read version from Expedition/version.py without importing the module
-with open('Expedition/version.py') as f:
-    content = f.read()
-    version_match = re.search(r"^__version__\s*=\s*['\"]([^'\"]+)['\"]", content, re.MULTILINE)
-    if not version_match:
-        raise RuntimeError("Unable to find __version__ in Expedition/version.py")
-    version = version_match.group(1)
-    
-    
-setup(
-    name='Expedition-Python',
-    version=version,
-    author='Tom Cheney',
-    author_email='tom@ttcmarine.com',
-    description='Python wrapper for the Expedition DLL',
-    long_description=open('README.md').read(),
-    long_description_content_type='text/markdown',
-    url='https://github.com/TTCMarine/Expedition-Python',
-    project_urls={
-        "Documentation": "https://expedition-python.readthedocs.io",
-        "Source": "https://github.com/TTCMarine/Expedition-Python",
-        "Bug Tracker": "https://github.com/TTCMarine/Expedition-Python/issues",
-    },
-    packages=find_packages(),
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.12',
-    ],
-)
+The actual package configuration is in pyproject.toml.
+This file is kept for backward compatibility with older tools that may
+expect setup.py. All package metadata is defined in pyproject.toml.
+
+This file can be removed in the future as modern setuptools will use pyproject.toml.
+"""
+from setuptools import setup
+
+# All configuration is in pyproject.toml
+# Version is read dynamically from Expedition.__version__
+setup()
