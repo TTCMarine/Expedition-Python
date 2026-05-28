@@ -1,12 +1,12 @@
 import ctypes
 import os
+from ctypes import POINTER, c_bool, c_char_p, c_double, c_int16, c_uint16
 from datetime import datetime
-from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
-from typing import List, Tuple, Union, Dict, Optional
-from .enums import Var, SysVar, SysBooleanVar
+from typing import Dict, List, Optional, Tuple, Union
 
+from .enums import SysBooleanVar, SysVar, Var
 
-EXPEDITION_DLL_REG_KEY = r'SOFTWARE\Expedition\Core'
+EXPEDITION_DLL_REG_KEY = r"SOFTWARE\Expedition\Core"
 # Boat index used when reading MagVar via set_boat_position (boat 0 cannot read Lat/Lon).
 _VARIATION_SCRATCH_BOAT = 2
 _OLE_DATE_EPOCH = datetime(1899, 12, 30)
@@ -20,13 +20,14 @@ def _datetime_to_ole_date(dt: datetime) -> float:
     return delta.days + (delta.seconds + delta.microseconds / 1e6) / 86400.0
 
 
-__all__ = ['ExpeditionDLL']
+__all__ = ["ExpeditionDLL"]
 
 
 def get_expedition_location():
     import winreg
+
     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, EXPEDITION_DLL_REG_KEY)
-    value, _ = winreg.QueryValueEx(key, 'Location')
+    value, _ = winreg.QueryValueEx(key, "Location")
     return value
 
 
@@ -52,7 +53,7 @@ class ExpeditionDLL:
         :param exp_install_dir: The directory where Expedition is installed (e.g. C:\\Program Files (x86)\\Expedition)
         """
         self.exp_install_dir = exp_install_dir
-        dll_name = 'ExpDLL.dll'
+        dll_name = "ExpDLL.dll"
         dll_path = os.path.join(exp_install_dir, dll_name)
         if not os.path.exists(dll_path):
             raise FileNotFoundError(f"Could not find {dll_name} in {exp_install_dir}")
@@ -75,9 +76,19 @@ class ExpeditionDLL:
         self.exp_dll.GetSysBool.restype = c_bool
         self.exp_dll.GetBoatNum.argtypes = [POINTER(c_int16)]
         self.exp_dll.SetBoatName.argtypes = [c_uint16, c_char_p]
-        self.exp_dll.GetBoatColour.argtypes = [c_uint16, POINTER(c_uint16), POINTER(c_uint16), POINTER(c_uint16)]
+        self.exp_dll.GetBoatColour.argtypes = [
+            c_uint16,
+            POINTER(c_uint16),
+            POINTER(c_uint16),
+            POINTER(c_uint16),
+        ]
         self.exp_dll.SetBoatColour.argtypes = [c_uint16, c_uint16, c_uint16, c_uint16]
-        self.exp_dll.GetVariation.argtypes = [ctypes.c_double, c_double, c_double, POINTER(c_double)]
+        self.exp_dll.GetVariation.argtypes = [
+            ctypes.c_double,
+            c_double,
+            c_double,
+            POINTER(c_double),
+        ]
         self.exp_dll.GetVariation.restype = c_bool
         self.exp_dll.GetAisDangerousCPA.argtypes = [POINTER(c_bool), ctypes.c_wchar_p]
         self.exp_dll.SetMOB.argtypes = [c_double, c_double]
@@ -104,7 +115,7 @@ class ExpeditionDLL:
         """
         name = ctypes.create_string_buffer(16)
         self.exp_dll.GetExpVarName(c_int16(var), name)
-        return name.value.decode('utf-8')
+        return name.value.decode("utf-8")
 
     def set_exp_user_var_name(self, var: Var, name):
         """
@@ -118,7 +129,7 @@ class ExpeditionDLL:
             raise ValueError("name must be 16 characters or less")
 
         if (0 <= var <= 31) or (Var.User0 <= var <= Var.User31):
-            self.exp_dll.SetExpUserVarName(c_int16(var), name.encode('utf-8'))
+            self.exp_dll.SetExpUserVarName(c_int16(var), name.encode("utf-8"))
         else:
             raise ValueError("var must be between 0 and 31 or between Var.User0 and Var.User31")
 
@@ -201,7 +212,9 @@ class ExpeditionDLL:
         """
         var_array = (c_int16 * len(var_list))(*var_list)
         value_array = (c_double * len(var_list))()
-        valid = self.exp_dll.GetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
+        valid = self.exp_dll.GetExpVars(
+            var_array, value_array, c_int16(len(var_list)), c_uint16(boat)
+        )
         if valid:
             return list(value_array)
         else:
@@ -273,7 +286,7 @@ class ExpeditionDLL:
         :param name:
         :return:
         """
-        self.exp_dll.SetBoatName(c_uint16(boat), name.encode('utf-8'))
+        self.exp_dll.SetBoatName(c_uint16(boat), name.encode("utf-8"))
 
     def get_boat_colour(self, boat: int) -> Tuple[int, int, int]:
         """
@@ -284,7 +297,9 @@ class ExpeditionDLL:
         r = c_uint16()
         g = c_uint16()
         b = c_uint16()
-        self.exp_dll.GetBoatColour(c_uint16(boat), ctypes.byref(r), ctypes.byref(g), ctypes.byref(b))
+        self.exp_dll.GetBoatColour(
+            c_uint16(boat), ctypes.byref(r), ctypes.byref(g), ctypes.byref(b)
+        )
         return r.value, g.value, b.value
 
     def set_boat_colour(self, boat: int, r: int, g: int, b: int):
@@ -339,7 +354,7 @@ class ExpeditionDLL:
         :param save: save the mark
         :return:
         """
-        self.exp_dll.PingMark(name.encode('utf-8'), c_double(lat), c_double(lon), c_bool(save))
+        self.exp_dll.PingMark(name.encode("utf-8"), c_double(lat), c_double(lon), c_bool(save))
 
     def create_active_route(self, name: str, save: bool = True):
         """
@@ -348,9 +363,11 @@ class ExpeditionDLL:
         :param save: whether to save (default True)
         :return:
         """
-        self.exp_dll.CreateActiveRoute(name.encode('utf-8'), c_bool(save))
+        self.exp_dll.CreateActiveRoute(name.encode("utf-8"), c_bool(save))
 
-    def add_mark_to_active_route(self, name: str, lat: float, lon: float, locked: bool = True, save: bool = True):
+    def add_mark_to_active_route(
+        self, name: str, lat: float, lon: float, locked: bool = True, save: bool = True
+    ):
         """
         Add a mark to the active route
         :param name: mark name
@@ -360,11 +377,13 @@ class ExpeditionDLL:
         :param save: whether to save (default True)
         :return:
         """
-        self.exp_dll.AddMarkToActiveRoute(name.encode('utf-8'),
-                                          c_double(lat), c_double(lon),
-                                          c_bool(locked), c_bool(save))
+        self.exp_dll.AddMarkToActiveRoute(
+            name.encode("utf-8"), c_double(lat), c_double(lon), c_bool(locked), c_bool(save)
+        )
 
-    def get_variation(self, lat: float, lon: float, date: Optional[datetime] = None) -> Optional[float]:
+    def get_variation(
+        self, lat: float, lon: float, date: Optional[datetime] = None
+    ) -> Optional[float]:
         """
         Get magnetic variation (degrees) at a position.
 

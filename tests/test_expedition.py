@@ -1,20 +1,21 @@
-import unittest
-import platform
 import os
+import platform
 import sys
-from Expedition import ExpeditionDLL, Var, SysVar
+import unittest
+
+from Expedition import ExpeditionDLL, SysVar, Var
 
 EXPEDITION_INSTALL_64_PATH = "C:\\Program Files\\Expedition\\Expedition"
 EXPEDITION_INSTALL_32_PATH = "C:\\Program Files (x86)\\Expedition\\Expedition"
 
 # Check if we're on Windows and if Expedition DLL is available
-IS_WINDOWS = sys.platform == 'win32'
+IS_WINDOWS = sys.platform == "win32"
 DLL_AVAILABLE = False
 
 if IS_WINDOWS:
     # Try to find the DLL in common installation paths
     for path in [EXPEDITION_INSTALL_64_PATH, EXPEDITION_INSTALL_32_PATH]:
-        dll_path = os.path.join(path, 'ExpDLL.dll')
+        dll_path = os.path.join(path, "ExpDLL.dll")
         if os.path.exists(dll_path):
             DLL_AVAILABLE = True
             break
@@ -37,11 +38,13 @@ class TestExpedition(unittest.TestCase):
         """Set up the expedition instance once for all tests."""
         cls.expedition = None
         cls.skip_reason = None
-        
+
         if not IS_WINDOWS:
             cls.skip_reason = "Tests require Windows with Expedition DLL installed"
         elif not DLL_AVAILABLE:
-            cls.skip_reason = "Expedition DLL not found. Install Expedition or set up mock implementation."
+            cls.skip_reason = (
+                "Expedition DLL not found. Install Expedition or set up mock implementation."
+            )
         else:
             # Try to create an instance
             try:
@@ -57,7 +60,7 @@ class TestExpedition(unittest.TestCase):
                         cls.expedition = ExpeditionDLL(EXPEDITION_INSTALL_32_PATH)
                 except (FileNotFoundError, OSError):
                     cls.skip_reason = "Could not initialize ExpeditionDLL"
-    
+
     def setUp(self):
         """Skip tests if expedition instance is not available."""
         if self.skip_reason:
@@ -144,5 +147,5 @@ class TestExpedition(unittest.TestCase):
         self.assertIsInstance(variation, float)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

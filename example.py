@@ -1,4 +1,4 @@
-from Expedition import ExpeditionDLL, Var, SysVar
+from Expedition import ExpeditionDLL, Var
 
 expedition = ExpeditionDLL("C:\\Program Files\\Expedition\\Expedition")
 

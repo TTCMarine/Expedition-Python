@@ -7,6 +7,7 @@ expect setup.py. All package metadata is defined in pyproject.toml.
 
 This file can be removed in the future as modern setuptools will use pyproject.toml.
 """
+
 from setuptools import setup
 
 # All configuration is in pyproject.toml
