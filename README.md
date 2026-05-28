@@ -83,6 +83,18 @@ Please ensure your code follows the project's style guidelines and includes test
 - [uv](https://docs.astral.sh/uv/) for development (optional but recommended)
 - For Windows: Expedition software installed
 
+### Expedition API headers (local only)
+
+Expedition’s C headers (`ExpDLL.h`, `user_channels.h`, `sys_channels.h`) are **proprietary** and are not committed or shipped with this package. On Windows, after installing or updating Expedition, sync them for local development and AI-assisted binding work:
+
+```bash
+uv run python scripts/sync_expedition_headers.py
+uv run python scripts/generate_enums_from_headers.py --write
+uv run python scripts/check_enums_against_headers.py
+```
+
+Headers are copied to `reference/expedition/` (gitignored). Enums in [`Expedition/enums.py`](Expedition/enums.py) are generated from those headers (see [`CHANGELOG.md`](CHANGELOG.md) for 2.0 breaking renames). See [`reference/README.md`](reference/README.md) and [`AGENTS.md`](AGENTS.md).
+
 ### Running Tests
 
 After `uv sync`, run tests with:

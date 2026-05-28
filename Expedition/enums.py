@@ -11,33 +11,27 @@ class SysVar(IntEnum):
     LogHz = auto()
     TwdPeriod = auto()
     AltTwa = auto()
-    WhatIfSet = auto()
-    WhatIfDrift = auto()
-    WhatIfTwd = auto()
-    WhatIfTws = auto()
+    StartDampWind = auto()
+    StartDampCurrent = auto()
+    TimerRoll = auto()
+    CurrentRotLimit = auto()
     HoldTwd = auto()
     HoldTws = auto()
     HoldSet = auto()
     HoldDrift = auto()
-    Spare0 = auto()
-    AutoLegRange = auto()
-    TimerRoll = auto()
-    CurrentRotLimit = auto()
-    StartDampWind = auto()
-    StartDampCurrent = auto()
     ValNumPersistent = auto()
-    StripChartWandLat0 = auto()
-    StripChartWandLon0 = auto()
-    StripChartWandLat1 = auto()
-    StripChartWandLon1 = auto()
-    StripChartWandLat2 = auto()
-    StripChartWandLon2 = auto()
-    StripChartWandLat3 = auto()
-    StripChartWandLon3 = auto()
-    StripChartWand0 = auto()
-    StripChartWand1 = auto()
-    StripChartWand2 = auto()
-    StripChartWand3 = auto()
+    WandLat0 = auto()
+    WandLon0 = auto()
+    WandLat1 = auto()
+    WandLon1 = auto()
+    WandLat2 = auto()
+    WandLon2 = auto()
+    WandLat3 = auto()
+    WandLon3 = auto()
+    Wand0 = auto()
+    Wand1 = auto()
+    Wand2 = auto()
+    Wand3 = auto()
     LaserLat = auto()
     LaserLon = auto()
     PrevMarkLat = auto()
@@ -46,41 +40,29 @@ class SysVar(IntEnum):
     LegBrgM = auto()
     LegBrgT = auto()
     StartTime = auto()
-    StartRSTime = auto()
     StartRSDist = auto()
-    StartRSAng = auto()
     StartRSLatL = auto()
     StartRSLonL = auto()
-    StartRPTime = auto()
     StartRPDist = auto()
-    StartRPAng = auto()
     StartRPLatL = auto()
     StartRPLonL = auto()
-    StartLSTime = auto()
     StartLSDist = auto()
-    StartLSAng = auto()
     StartLSLatL = auto()
     StartLSLonL = auto()
-    StartLPTime = auto()
     StartLPDist = auto()
-    StartLPAng = auto()
     StartLPLatL = auto()
     StartLPLonL = auto()
-    StartStrbLatX = auto()
-    StartStrbLonX = auto()
-    StartPortLatX = auto()
-    StartPortLonX = auto()
     StartReachLat = auto()
     StartReachLon = auto()
     AboveLine = auto()
     StartDistToPort = auto()
     StartDistToStrb = auto()
-    CursorTime = auto()
-    CursorTimeP = auto()
-    CursorTimeS = auto()
-    CursorPolarTime = auto()
-    CursorBearing = auto()
-    CursorRange = auto()
+    MouseTime = auto()
+    MouseTimeP = auto()
+    MouseTimeS = auto()
+    MouseTimePolar = auto()
+    MouseBearing = auto()
+    MouseRange = auto()
     GateLat = auto()
     GateLon = auto()
     BowLat = auto()
@@ -109,74 +91,82 @@ class SysVar(IntEnum):
     RemoteLineStrbLat = auto()
     RemoteLineStrbLon = auto()
     TestStartTime = auto()
+    DisplayNorth = auto()
+    DisplaySouth = auto()
+    DisplayEast = auto()
+    DisplayWest = auto()
+    DisplayScale = auto()
     NumSysChannels = auto()
 
 
 class SysBooleanVar(Enum):
     """Enumeration of system boolean variables."""
-    Spare0 = 0
-    LocalTime = auto()
-    ErrorLogging = auto()
-    MagneticMode = auto()
-    Fahrenheit = auto()
-    Keypad = auto()
-    FourWands = auto()
-    XteStandard = auto()
-    AutoLegBisector = auto()
-    PortMode = auto()
-    Spare1 = auto()
-    Spare2 = auto()
-    SimpleRibbon = auto()
-    TrackLoad = auto()
-    Spare3 = auto()
-    StartEnds = auto()
-    LaylineROT = auto()
-    LaylineTimeBelowZero = auto()
-    Touch = auto()
-    Slave = auto()
-    AutoLegRange = auto()
-    LogBoats = auto()
-    CalcLeeway = auto()
-    CalcLeewayComponents = auto()
-    CalcPitchRollRate = auto()
-    CalcCurrent = auto()
-    CalcTw = auto()
-    CalcYawRate = auto()
-    CalcTwd = auto()
-    CalcTwHeel = auto()
-    CalcUseSog = auto()
-    CalcUseCog = auto()
-    CalcUsePitchRollRates = auto()
-    CalcAwaMastRotation = auto()
-    NumPersistent = auto()
-    Quit = auto()
-    AltId = auto()
-    UseInstAsTarg = auto()
-    UpdateDerived = auto()
-    StartTimeGPS = auto()
-    StartTimeReaching = auto()
-    StartTimePort = auto()
-    StartTimeStarboard = auto()
-    StartMagnify = auto()
-    StartRoll = auto()
-    StartDownwind = auto()
-    MOB = auto()
-    AISDangerousCPA = auto()
-    HoldTwd = auto()
-    HoldTws = auto()
-    HoldSet = auto()
-    HoldDrift = auto()
-    LogPlayback = auto()
-    UserFlag = auto()
-    Day = auto()
-    Gate = auto()
-    ThreadMutex = auto()
-    Max = auto()
+    lAutoPan = 0
+    lLocalTime = auto()
+    lAutoPalette = auto()
+    lMagneticMode = auto()
+    lFahrenheit = auto()
+    lKeypad = auto()
+    lFourWands = auto()
+    lXteStandard = auto()
+    lCalcDewPoint = auto()
+    lPortMode = auto()
+    lVersionUpdate = auto()
+    lSpare2 = auto()
+    lSimpleRibbon = auto()
+    lTrackLoad = auto()
+    lSpare3 = auto()
+    lStartEnds = auto()
+    lLaylineROT = auto()
+    lLaylineTimeBelowZero = auto()
+    lTouch = auto()
+    lSlave = auto()
+    lSpare4 = auto()
+    lLogBoats = auto()
+    lCalcLeeway = auto()
+    lCalcLeewayComponents = auto()
+    lCalcPitchRollRate = auto()
+    lCalcCurrent = auto()
+    lCalcTw = auto()
+    lCalcYawRate = auto()
+    lCalcTwd = auto()
+    lCalcTwHeel = auto()
+    lCalcUseSog = auto()
+    lCalcUseCog = auto()
+    lCalcUsePitchRollRates = auto()
+    lCalcAwaMastRotation = auto()
+    lNumPersistent = auto()
+    lQuit = auto()
+    lAltId = auto()
+    lUseInstAsTarg = auto()
+    lUpdateDerived = auto()
+    lStartTimeGPS = auto()
+    lStartTimeReaching = auto()
+    lStartTimePort = auto()
+    lStartTimeStarboard = auto()
+    lStartMagnify = auto()
+    lStartRoll = auto()
+    lStartDownwind = auto()
+    lMOB = auto()
+    lAISDangerousCPA = auto()
+    lHoldTwd = auto()
+    lHoldTws = auto()
+    lHoldSet = auto()
+    lHoldDrift = auto()
+    lLogPlayback = auto()
+    lUserFlag = auto()
+    lDay = auto()
+    lDarkTheme = auto()
+    lGate = auto()
+    lHaveGate = auto()
+    lPingAtBow = auto()
+    lThreadMutex = auto()
+    lMax = auto()
 
 
 class SysIntVar(Enum):
     """Enumeration of system integer variables."""
-    Utc = 0
+    Theme = 0
     Depth = auto()
     Speed = auto()
     Distance = auto()
@@ -184,17 +174,17 @@ class SysIntVar(Enum):
     DampingFilter = auto()
     Gps = auto()
     GpsPort = auto()
-    NumPersistent = auto()
     Palette = auto()
-    CoresPhysical = auto()
-    CoresLogical = auto()
+    Pressure = auto()
+    PredictorMinutes = auto()
+    NumPersistent = auto()
     MarkRounding = auto()
     Max = auto()
 
 
 class Var(IntEnum):
     """Enumeration of Expedition variables."""
-    Utc = 0  # Microsoft DATE type,utc system time
+    Utc = 0
     Bsp = auto()
     Awa = auto()
     Aws = auto()
@@ -202,24 +192,22 @@ class Var(IntEnum):
     Tws = auto()
     Twd = auto()
     RudderFwd = auto()
-    DTargBsp = auto()  # Delta Target Boatspeed
+    DeltaTargBsp = auto()
     Course = auto()
-    Leeway = auto()
+    Lwy = auto()
     Set = auto()
     Drift = auto()
     Hdg = auto()
     AirTemp = auto()
     SeaTemp = auto()
     Baro = auto()
-    Depth = auto()  # metres
-    Heel = auto()
-    Roll = Heel
-    Trim = auto()
-    Pitch = Trim
+    Depth = auto()
+    Roll = auto()
+    Pitch = auto()
     Rudder = auto()
     Tab = auto()
-    Forestay = auto()
-    Downhaul = auto()
+    ForestayLoad = auto()
+    DownhaulLoad = auto()
     MastAngle = auto()
     ForestayLen = auto()
     Mast = auto()
@@ -235,16 +223,16 @@ class Var(IntEnum):
     LayDistOnPort = auto()
     LayTimeOnPort = auto()
     LayStrbBear = auto()
-    GpsQuality = auto()  # 0 Bad, 1 Autonomous, 2 Differential, 3 p-code, 4,5 Rtk, 6 dr, if change this, need to change CPort::NmeaAPB()
+    GpsMethod = auto()
     GpsHDOP = auto()
     GpsPDOP = auto()
     GpsVDOP = auto()
-    GpsNumber = auto()  # Number of satellites in active constellation
-    GpsAge = auto()  # Age of differential data
-    GpsAltitude = auto()  # antenna height
+    GpsNumber = auto()
+    GpsAge = auto()
+    GpsAltitude = auto()
     GpsGeoidSeparation = auto()
-    GpsMode = auto()  # 0 = 1D, 1 = 2D, 2 = 3D, 3 = Auto, 6 = error
-    Lat = auto()  # if add GPS vars, extend CCore::IsGPSvar()
+    GpsMode = auto()
+    Lat = auto()
     Lon = auto()
     Cog = auto()
     Sog = auto()
@@ -261,12 +249,12 @@ class Var(IntEnum):
     PortRunner = auto()
     PolarBspN = auto()
     PolarBspPercentN = auto()
-    TargTwaLwy = auto()  # target twa without leeway
+    TargTwaLwy = auto()
     VmgPercent = auto()
     Vang = auto()
     Traveller = auto()
     MainSheet = auto()
-    PolVmcToMark = auto()  # vmc if headed at mark
+    PolVmcToMark = auto()
     KeelAngle = auto()
     KeelHeight = auto()
     Board = auto()
@@ -281,7 +269,7 @@ class Var(IntEnum):
     StartTimeToStrb = auto()
     LineSquareWind = auto()
     StartDistToLine = auto()
-    StartRchTimeToLine = auto()  # time to reach into line
+    StartRchTimeToLine = auto()
     StartRchDistToLine = auto()
     StartRchBspToLine = auto()
     MarkTime = auto()
@@ -292,9 +280,9 @@ class Var(IntEnum):
     MagVar = auto()
     Gwd = auto()
     Gws = auto()
-    LayDist = auto()  # distance to layline we are heading to
-    LayTime = auto()  # time to layline
-    LayBear = auto()  # bearing of that layline
+    LayDist = auto()
+    LayTime = auto()
+    LayBear = auto()
     VmcPercent = auto()
     PolVmc = auto()
     OptVmc = auto()
@@ -313,7 +301,7 @@ class Var(IntEnum):
     RadarRng = auto()
     RadarBrg = auto()
     StartDistBelowLineStern = auto()
-    Alt0 = auto()  # alternating number channels must be consecutive
+    Alt0 = auto()
     Alt1 = auto()
     Alt2 = auto()
     Alt3 = auto()
@@ -322,72 +310,53 @@ class Var(IntEnum):
     Alt6 = auto()
     Alt7 = auto()
     Alt8 = auto()
-    Alt9 = auto()  # num = (ExAlt9 - ExAlt0 + 1) = (ExAltMax - ExAlt0 + 1)	# defined in CoreMem.h
-    AltMax = Alt9  # alternating channels must be consecutive
-
+    Alt9 = auto()
     NextMarkPolTime = auto()
-
     StartLineBiasDeg = auto()
     StartLineBiasLen = auto()
-
-    StartLayPortBear = auto()  # laylines for start line
+    StartLayPortBear = auto()
     StartLayStrbBear = auto()
-
     NextMarkAwa = auto()
     NextMarkAws = auto()
-
-    StartRSTime = auto()  # turning to right, ending up on starboard
-    StartRPTime = auto()  # turning to right, ending up on port
-    StartLSTime = auto()  # turning to left, ending up on starboard
-    StartLPTime = auto()  # turning to left, ending up on port
-
+    StartRSTime = auto()
+    StartRPTime = auto()
+    StartLSTime = auto()
+    StartLPTime = auto()
     GpsDistToRaceNote = auto()
     GpsTimeToRaceNote = auto()
-
     LogBsp = auto()
     LogSog = auto()
     StartGpsTimeToLine = auto()
     StartGpsTimeToBurn = auto()
-    TargTwaS = auto()  # Start
-    TargBspS = auto()  # Start
-
+    TargTwaS = auto()
+    TargBspS = auto()
     GpsTime = auto()
-
-    TwdPlus90 = auto()  # Twd + 90
-    TwdLess90 = auto()  # Twd - 90
-
+    TwdPlus90 = auto()
+    TwdLess90 = auto()
     Shadow = auto()
     ShadowOppTack = auto()
-
     DownhaulLoad2 = auto()
-
     TackAngle = auto()
     TackAnglePolar = auto()
-
     TargAwa = auto()
-
-    StartTimeBurnPortX = auto()  # offset for the start stbd layline to the pin
-    StartTimeBurnStrbX = auto()  # time to burn when tack onto starboard end starboard layline and sail to 20s from line
+    StartTimeBurnPortX = auto()
+    StartTimeBurnStrbX = auto()
     StartLayTimeP = auto()
     StartLayTimeS = auto()
-
     MarkSet = auto()
     MarkDrift = auto()
-
     MarkLat = auto()
     MarkLon = auto()
-    StartPortEndLat = auto()  # ends of line
+    StartPortEndLat = auto()
     StartPortEndLon = auto()
     StartStrbEndLat = auto()
     StartStrbEndLon = auto()
-
     GpsHPE = auto()
-    Humidity = auto()
+    RH = auto()
     LeadPort = auto()
     LeadStbd = auto()
     Backstay = auto()
-
-    User0 = auto()  # user channels must be consecutive
+    User0 = auto()
     User1 = auto()
     User2 = auto()
     User3 = auto()
@@ -418,58 +387,44 @@ class Var(IntEnum):
     User28 = auto()
     User29 = auto()
     User30 = auto()
-    User31 = auto()  # num = (ExUser31 - ExUser0 + 1) = (ExUserMax - ExUser0 + 1)
-    UserMax = User31  # user channels must be consecutive
-
+    User31 = auto()
     StartTimeToGun = auto()
     StartTimeToLine = auto()
     StartTimeToBurn = auto()
     StartDistBelowLine = auto()
     StartDistBelowLineGun = auto()
-
-    GateTimeOnPort = auto()  # this is to the gate mark
+    GateTimeOnPort = auto()
     GateDistOnStrb = auto()
     GateTimeOnStrb = auto()
     GateDistOnPort = auto()
-
     GateSpotTimeOnStrb = auto()
     GateSpotTimeOnPort = auto()
-
     LayPortBearUp = auto()
     LayStrbBearUp = auto()
     LayPortBearDn = auto()
     LayStrbBearDn = auto()
-
     TideLayPortTimeOnPort = auto()
     TideLayPortTimeOnStbd = auto()
     TideLayStbdTimeOnPort = auto()
     TideLayStbdTimeOnStbd = auto()
     TideLayPortTime = auto()
     TideLayStbdTime = auto()
-
     MaxLayPortBear = auto()
     MinLayPortBear = auto()
     MaxLayStrbBear = auto()
     MinLayStrbBear = auto()
-
     TwdLayMark = auto()
-    TwdLayMarkOpp = auto()  # lay on other board
-
+    TwdLayMarkOpp = auto()
     DeltaBspSog = auto()
     DeltaHdgCog = auto()
-
     LayPortRatio = auto()
     LayStrbRatio = auto()
-
     FourierTwd = auto()
     FourierTws = auto()
-
     TargTwa = auto()
     TargBsp = auto()
-
     NearestTide = auto()
-
-    PolCustom0 = auto()  # these need to be in this order : see CCore::DerivedPolarNumbers()
+    PolCustom0 = auto()
     PolCustom1 = auto()
     PolCustom2 = auto()
     PolCustom3 = auto()
@@ -481,65 +436,48 @@ class Var(IntEnum):
     PolCustom1Targ = auto()
     PolCustom2Targ = auto()
     PolCustom3Targ = auto()
-
-    WaveSigHeight = auto()  # XDR from Volvo wave sensor
+    WaveSigHeight = auto()
     WaveSigPeriod = auto()
     WaveMaxHeight = auto()
     WaveMaxPeriod = auto()
-
-    SysGpsTimeDelta = auto()  # difference between system clock time and GPS (better than ExUtc - ExGsTime), was ExSlam
-
+    ExSysGpsTimeDelta = auto()
     Heave = auto()
-
     Mwa = auto()
     Mws = auto()
     Boom = auto()
-
     TargBspPercent = auto()
     HeadingToSteer = auto()
     HeadingToSteerPol = auto()
-
     StartBspToPort = auto()
     StartBspToStrb = auto()
     StartBspOnPort = auto()
     StartBspOnStrb = auto()
-
     Twist = auto()
-
     SailNow = auto()
     SailMark = auto()
     SailNext = auto()
-
     TwdTwisted = auto()
-
     TackLossVMGSec = auto()
     TackLossVMGMetres = auto()
-
     TripLog = auto()
-    DeltaMarkBrgCog = auto()  # delta of cog and bearing to mark
-
+    DeltaMarkBrgCog = auto()
     PitchRate = auto()
     RollRate = auto()
-
     DeltaPolBsp = auto()
     DeltaTargRoll = auto()
-
     DeflectorP = auto()
     RudderP = auto()
     RudderS = auto()
     RudderToe = auto()
     BspTransverse = auto()
     ForestayInner = auto()
-    GateTime = auto()  # this is to the gate mark
-
+    GateTime = auto()
     ZeroAhead = auto()
     BrgFromBoat0 = auto()
     RngFromBoat0 = auto()
-
     DeflectorS = auto()
     Bobstay = auto()
     Outhaul = auto()
-
     D0port = auto()
     D0starboard = auto()
     D1port = auto()
@@ -548,43 +486,33 @@ class Var(IntEnum):
     V0starbboard = auto()
     V1port = auto()
     V1starbboard = auto()
-
     StartTimeToPortSimple = auto()
     StartTimeToStrbSimple = auto()
-
     TargTwd = auto()
     TargTwdDelta = auto()
     PolarTws = auto()
     PolarTwsDelta = auto()
     PolarTwsPC = auto()
-
     OppTrackCog = auto()
-
     StartTimeToPortPinch = auto()
     StartTimeToStrbPinch = auto()
-
     PredTwd = auto()
     PredTws = auto()
     PredMSLP = auto()
-
     NextMarkLat = auto()
     NextMarkLon = auto()
-
     BoomAngle = auto()
     Cunningham = auto()
     ForestayInnerHalyard = auto()
     JibFurl = auto()
     JibHalyard = auto()
-
     MastCant = auto()
-
     J1 = auto()
     J2 = auto()
     J3 = auto()
     J4 = auto()
     FoilP = auto()
     FoilS = auto()
-
     Reacher = auto()
     Blade = auto()
     Staysail = auto()
@@ -596,71 +524,52 @@ class Var(IntEnum):
     DeflectorLower = auto()
     WinchP = auto()
     WinchS = auto()
-    SpinnakerP = auto()  # halyard
-    SpinnakerS = auto()  # halyard
+    SpinnakerP = auto()
+    SpinnakerS = auto()
     MainHalyard = auto()
     Mast2 = auto()
-
     DeltaPolarRoll = auto()
-
     LayPortBearMean = auto()
     LayStrbBearMean = auto()
     LayPortBearSD = auto()
     LayStrbBearSD = auto()
-
     StartTimeToPortBurn = auto()
     StartTimeToStrbBurn = auto()
-
-    DepthAft = auto()  # metres
-
+    DepthAft = auto()
     StartBurnPC = auto()
     PolarBspS = auto()
     StartGunBspTargPC = auto()
     StartGunBspPolPC = auto()
     StartLineTimeSP = auto()
-
     DeltaCourseCog = auto()
     LayTimeGPS = auto()
-
     EngineTemp = auto()
-    EngineOilTemp = auto()  # ExEngineOilPressure is above
+    EngineOilTemp = auto()
     TransmissionOilTemp = auto()
     TransmissionOilPressure = auto()
-    FuelLevel = auto()  # N2k instance 0
-
+    FuelLevel = auto()
     Amps = auto()
     ChargeState = auto()
-
     GateRng = auto()
     GateBrg = auto()
-
     Twg = auto()
     Twdg = auto()
     DewPt = auto()
-
     ForestayPlusTackLoad = auto()
-
     Gradient = auto()
     TwsWithGradient = auto()
-
     RudderPitchP = auto()
     RudderPitchS = auto()
-
-    TestTime = auto()  # time since test start
-
+    TestTime = auto()
     GateSquareWind = auto()
     GateBiasLen = auto()
-
-    WaterLevel = auto()  # N2k instance 0
-    WaterLevel2 = auto()  # N2k instance 1
+    WaterLevel = auto()
+    WaterLevel2 = auto()
     FuelLevel2 = auto()
-
-    CANLoad = auto()  # NMEA 2000 BUS load
-    CANFastPacketErrors = auto()
-
+    CANLoad = auto()
+    EXCANFastPacketErrors = auto()
     PolarBspPercentS = auto()
     TargBspPercentS = auto()
-
     OppTrackMarkBrg = auto()
     AirDensity = auto()
     AirDensityPredicted = auto()
@@ -682,12 +591,11 @@ class Var(IntEnum):
     SailEvent = auto()
     MouseTime = auto()
     MouseTimePolar = auto()
-    PortFwdPct = auto()
-    PortAftPct = auto()
-    StbdFwdPct = auto()
-    StbdAftPct = auto()
-    TWDmin = auto()
-    TWDmax = auto()
+    PortFwdTank = auto()
+    PortAftTank = auto()
+    StbdFwdTank = auto()
+    StbdAftTank = auto()
+    TwdMin = auto()
+    TwdMax = auto()
     PredSeaTemp = auto()
-
-    NumChannels = auto()  # number of channels
+    NumChannels = auto()

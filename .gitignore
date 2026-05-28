@@ -181,3 +181,6 @@ fabric.properties
 
 # idea folder, uncomment if you don't need it
 .idea
+
+# Expedition proprietary headers (sync locally; do not commit)
+reference/expedition/
