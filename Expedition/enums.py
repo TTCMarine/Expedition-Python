@@ -682,5 +682,12 @@ class Var(IntEnum):
     SailEvent = auto()
     MouseTime = auto()
     MouseTimePolar = auto()
+    PortFwdPct = auto()
+    PortAftPct = auto()
+    StbdFwdPct = auto()
+    StbdAftPct = auto()
+    TWDmin = auto()
+    TWDmax = auto()
+    PredSeaTemp = auto()
 
     NumChannels = auto()  # number of channels

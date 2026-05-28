@@ -109,13 +109,16 @@ class TestExpedition(unittest.TestCase):
         self.assertEqual(colour, (0, 0, 0))
 
     def test_set_and_get_boat_position(self):
-        self.expedition.set_boat_position(0, (50.8, -1.3))
-        position = self.expedition.get_boat_position(0)
+        # Boat 0 is own-ship GPS; Lat/Lon are not readable via the DLL on boat 0.
+        boat = 1
+        self.expedition.set_boat_position(boat, (50.8, -1.3))
+        position = self.expedition.get_boat_position(boat)
         self.assertEqual(position, (50.8, -1.3))
 
     def test_set_by_name(self):
-        self.expedition.set_exp_var_by_name("Lat", 50.7)
-        value = self.expedition.get_exp_var_value(Var.Lat)
+        boat = 1
+        self.expedition.set_exp_var_by_name("Lat", 50.7, boat)
+        value = self.expedition.get_exp_var_value(Var.Lat, boat)
         self.assertEqual(value, 50.7)
 
     def test_set_by_name_error(self):
@@ -123,18 +126,19 @@ class TestExpedition(unittest.TestCase):
             self.expedition.set_exp_var_by_name("Invalid", 50.7)
 
     def test_get_by_name(self):
-        self.expedition.set_exp_var_value(Var.Lon, -1.3)
-        value = self.expedition.get_exp_var_value_by_name("Lon")
+        boat = 1
+        self.expedition.set_exp_var_value(Var.Lon, -1.3, boat)
+        value = self.expedition.get_exp_var_value_by_name("Lon", boat)
         self.assertEqual(value, -1.3)
 
     def test_set_dict(self):
-        self.expedition.set_exp_vars_dict({Var.Lat: 50.8, Var.Lon: -1.4})
-        lat = self.expedition.get_exp_var_value(Var.Lat)
-        lon = self.expedition.get_exp_var_value(Var.Lon)
+        boat = 1
+        self.expedition.set_exp_vars_dict({Var.Lat: 50.8, Var.Lon: -1.4}, boat)
+        lat = self.expedition.get_exp_var_value(Var.Lat, boat)
+        lon = self.expedition.get_exp_var_value(Var.Lon, boat)
         self.assertEqual(lat, 50.8)
         self.assertEqual(lon, -1.4)
 
-    @unittest.skip("Disabled for now, magvar not working as expected")
     def test_get_variation(self):
         variation = self.expedition.get_variation(50.8, -1.3)
         self.assertIsInstance(variation, float)

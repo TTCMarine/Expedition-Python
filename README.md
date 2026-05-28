@@ -20,13 +20,15 @@ pip install Expedition-Python
 
 ### Development Installation
 
-For development, you can install the package in editable mode:
+For development, use [uv](https://docs.astral.sh/uv/) to create a virtual environment and install the package in editable mode with dev tools:
 
 ```bash
 git clone https://github.com/TTCMarine/Expedition-Python.git
 cd Expedition-Python
-pip install -e .
+uv sync
 ```
+
+Alternatively, you can use pip: `pip install -e .`
 
 ### Platform Support
 
@@ -77,22 +79,19 @@ Please ensure your code follows the project's style guidelines and includes test
 
 ### Requirements
 
-- Python 3.8 or higher
+- Python 3.8 or higher (3.12 recommended for local development; see `.python-version`)
+- [uv](https://docs.astral.sh/uv/) for development (optional but recommended)
 - For Windows: Expedition software installed
-- For development: pytest (optional, for running tests)
 
 ### Running Tests
 
-To run the tests for the Expedition module, you can use either:
+After `uv sync`, run tests with:
 
 ```bash
-# Using unittest (built-in)
-python -m unittest discover tests
-
-# Using pytest (recommended)
-pip install pytest
-pytest tests/
+uv run pytest tests/ -v
 ```
+
+You can also use unittest: `python -m unittest discover tests`
 
 > **Note:** Tests require the Expedition DLL to be installed on Windows. On non-Windows platforms or when the DLL is not found, tests will be automatically skipped. This is expected behavior and allows the test suite to run on CI/CD systems without Expedition installed.
 
@@ -101,8 +100,7 @@ pytest tests/
 The package uses modern Python packaging with `pyproject.toml`. To build:
 
 ```bash
-pip install build
-python -m build
+uv build
 ```
 
 This will create distribution files in the `dist/` directory.

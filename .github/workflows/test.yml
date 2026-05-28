@@ -26,27 +26,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
 
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install build wheel
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
 
       - name: Build package
-        run: python -m build
+        run: uv build
 
       - name: Install package
-        run: |
-          python -m pip install dist/*.whl
+        run: uv pip install dist/*.whl
 
       - name: Run tests
-        run: |
-          python -m pip install pytest
-          python -m pytest tests/ -v
+        run: uv run pytest tests/ -v
         # Tests will be automatically skipped on non-Windows or when DLL is not available
         # Skipped tests are considered successful, so no continue-on-error needed
 
@@ -56,25 +52,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
+          enable-cache: true
 
-      - name: Install linting tools
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ruff black isort mypy
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
 
       - name: Check code formatting with black
-        run: black --check .
+        run: uv run black --check .
 
       - name: Check import sorting with isort
-        run: isort --check .
+        run: uv run isort --check .
 
       - name: Lint with ruff
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Type check with mypy
-        run: mypy Expedition/ || true  # Allow mypy to fail for now
-
+        run: uv run mypy Expedition/ || true  # Allow mypy to fail for now

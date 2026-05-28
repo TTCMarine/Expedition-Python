@@ -1,12 +1,23 @@
 import ctypes
 import os
-from datetime import datetime, UTC
+from datetime import datetime
 from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
 from typing import List, Tuple, Union, Dict, Optional
 from .enums import Var, SysVar, SysBooleanVar
 
 
 EXPEDITION_DLL_REG_KEY = r'SOFTWARE\Expedition\Core'
+# Boat index used when reading MagVar via set_boat_position (boat 0 cannot read Lat/Lon).
+_VARIATION_SCRATCH_BOAT = 2
+_OLE_DATE_EPOCH = datetime(1899, 12, 30)
+
+
+def _datetime_to_ole_date(dt: datetime) -> float:
+    """OLE DATE: days since 1899-12-30 (see ExpDLL.h GetVariation DATE utc)."""
+    if dt.tzinfo is not None:
+        dt = dt.astimezone().replace(tzinfo=None)
+    delta = dt - _OLE_DATE_EPOCH
+    return delta.days + (delta.seconds + delta.microseconds / 1e6) / 86400.0
 
 
 __all__ = ['ExpeditionDLL']
@@ -49,6 +60,7 @@ class ExpeditionDLL:
 
         # Define return types and argument types for the functions
         self.exp_dll.GetExpVarNum.argtypes = [POINTER(c_int16)]
+        self.exp_dll.GetExpVarNum.restype = c_int16
         self.exp_dll.GetExpVarName.argtypes = [c_int16, ctypes.c_char_p]
         self.exp_dll.SetExpUserVarName.argtypes = [c_int16, ctypes.c_char_p]
         self.exp_dll.SetExpVar.argtypes = [c_int16, c_double, c_uint16]
@@ -81,8 +93,8 @@ class ExpeditionDLL:
         :return: The number of Expedition variables
         """
         num = c_int16()
-        self.exp_dll.GetExpVarNum(ctypes.byref(num))
-        return num.value
+        count = self.exp_dll.GetExpVarNum(ctypes.byref(num))
+        return int(count)
 
     def get_exp_var_name(self, var: Var) -> str:
         """
@@ -140,7 +152,10 @@ class ExpeditionDLL:
         :return: value of the variable
         """
         value = c_double()
-        valid = self.exp_dll.GetExpVar(c_int16(var), ctypes.byref(value), c_uint16(boat), None)
+        age = c_int16()
+        valid = self.exp_dll.GetExpVar(
+            c_int16(var), ctypes.byref(value), c_uint16(boat), ctypes.byref(age)
+        )
         if valid:
             return value.value
         else:
@@ -155,8 +170,13 @@ class ExpeditionDLL:
         """
         var_id = Var[name]
         value = c_double()
-        self.exp_dll.GetExpVar(c_int16(var_id), ctypes.byref(value), c_uint16(boat), None)
-        return value.value
+        age = c_int16()
+        valid = self.exp_dll.GetExpVar(
+            c_int16(var_id), ctypes.byref(value), c_uint16(boat), ctypes.byref(age)
+        )
+        if valid:
+            return value.value
+        return None
 
     def set_exp_vars(self, var_list: List[Var], value_list: List[float], boat=0):
         """
@@ -294,6 +314,8 @@ class ExpeditionDLL:
         :return: tuple of latitude and longitude
         """
         values = self.get_exp_vars([Var.Lat, Var.Lon], boat)
+        if values is None:
+            return None
         if len(values) == 2 and all(isinstance(x, float) for x in values):
             return values[0], values[1]
         else:
@@ -344,28 +366,29 @@ class ExpeditionDLL:
 
     def get_variation(self, lat: float, lon: float, date: Optional[datetime] = None) -> Optional[float]:
         """
-        Get the variation at a position
-        :param lat: latitude
-        :param lon: longitude
-        :param date: date
-        :return: variation
+        Get magnetic variation (degrees) at a position.
+
+        Uses ExpDLL GetVariation (OLE DATE utc per ExpDLL.h). If that fails, reads
+        Var.MagVar after setting position on a scratch boat (Expedition must be running).
         """
         if date is None:
-            date = datetime.now(UTC)
+            date = datetime.now()
 
-        # Windows epoch: January 1, 1601
-        windows_epoch = datetime(1601, 1, 1, tzinfo=UTC)
-
-        # Calculate the difference in days between the current time and the Windows epoch
-        delta = date - windows_epoch
-
-        # Convert the difference to the number of days (including fractional part for time of day)
-        windows_date = delta.days + delta.seconds / 86400.0  # 86400 seconds in a day
-
-        # initialize variation to 0
-        variation = c_double(0)
-        success = self.exp_dll.GetVariation(c_double(windows_date), c_double(lat), c_double(lon), ctypes.byref(variation))
+        ole_date = _datetime_to_ole_date(date)
+        variation = c_double()
+        success = self.exp_dll.GetVariation(
+            c_double(ole_date), c_double(lat), c_double(lon), ctypes.byref(variation)
+        )
         if success:
             return variation.value
-        else:
-            return None
+
+        boat = _VARIATION_SCRATCH_BOAT
+        prev_position = self.get_boat_position(boat)
+        try:
+            self.set_boat_position(boat, (lat, lon))
+            magvar = self.get_exp_var_value(Var.MagVar, boat)
+        finally:
+            if prev_position is not None:
+                self.set_boat_position(boat, prev_position)
+
+        return magvar

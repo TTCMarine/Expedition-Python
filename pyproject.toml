@@ -15,6 +15,7 @@ maintainers = [
     {name = "Tom Cheney", email = "tom@ttcmarine.com"}
 ]
 keywords = ["expedition", "sailing", "navigation", "dll", "wrapper"]
+dynamic = ["version"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -32,6 +33,15 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "black>=24.0",
+    "isort>=5.13",
+    "mypy>=1.8",
+]
 
 [project.urls]
 Homepage = "https://github.com/TTCMarine/Expedition-Python"
