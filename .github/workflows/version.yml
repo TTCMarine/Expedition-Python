@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   versioning:
     runs-on: ubuntu-latest
@@ -59,7 +62,23 @@ jobs:
         run: |
           git config --global user.email "github-actions@github.com"  # Set the email for GitHub Actions bot
           git config --global user.name "GitHub Actions"  # Set the name for GitHub Actions bot
+          tag="${{ env.next_version }}"
           git add Expedition/version.py
-          git commit -m "Bump version to ${{ env.next_version }}"
-          git tag ${{ env.next_version }}
-          git push origin main --tags
+          if git diff --cached --quiet; then
+            echo "No changes to Expedition/version.py; skipping commit." >&2
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "Tag $tag already exists; nothing to do." >&2
+              exit 0
+            fi
+            echo "Creating missing tag $tag on current commit." >&2
+            git tag "$tag"
+            git push origin "refs/tags/$tag"
+          else
+            git commit -m "Bump version to $tag"
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "Tag $tag already exists; pushing branch and existing tags." >&2
+            else
+              git tag "$tag"
+            fi
+            git push origin main --tags
+          fi
