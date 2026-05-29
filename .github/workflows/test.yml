@@ -66,4 +66,4 @@ jobs:
         run: uv run ruff check .
 
       - name: Type check with mypy
-        run: uv run mypy Expedition/ || true  # Allow mypy to fail for now
+        run: uv run mypy Expedition/

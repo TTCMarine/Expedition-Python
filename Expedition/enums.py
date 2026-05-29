@@ -100,7 +100,7 @@ class SysVar(IntEnum):
     NumSysChannels = auto()
 
 
-class SysBooleanVar(Enum):
+class SysBooleanVar(IntEnum):
     """Enumeration of system boolean variables."""
 
     lAutoPan = 0
