@@ -34,7 +34,7 @@ jobs:
         run: uv build
 
       - name: Install package
-        run: uv pip install dist/*.whl
+        run: uv pip install (Get-ChildItem dist -Filter *.whl | Select-Object -First 1 -ExpandProperty FullName)
 
       - name: Run tests
         run: uv run pytest tests/ -v
