@@ -12,13 +12,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        exclude:
-          # Windows-specific DLL, so only test on Windows with real DLL
-          # macOS and Linux tests will be skipped (DLL not available)
-          - os: windows-latest
-            python-version: "3.8"  # Test fewer versions on Windows
+        os: [windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}
 
@@ -47,7 +42,7 @@ jobs:
         # Skipped tests are considered successful, so no continue-on-error needed
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

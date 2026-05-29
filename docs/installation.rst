@@ -10,5 +10,5 @@ You can install Expedition-Python via pip:
 Requirements
 ------------
 
-- Python 3.8+
+- Python 3.10+
 - [Any other dependencies, or say "All dependencies are installed automatically."]

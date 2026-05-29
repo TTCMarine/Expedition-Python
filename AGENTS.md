@@ -14,7 +14,7 @@ A Python **ctypes** wrapper around Expedition’s `ExpDLL.dll` for sailing navig
 | Tests | [`tests/test_expedition.py`](tests/test_expedition.py) |
 | User docs (Sphinx) | [`docs/`](docs/), built via [`readthedocs.yaml`](readthedocs.yaml) |
 
-Runtime: **Windows only** for real DLL use. CI runs on Linux/macOS/Windows; integration tests **skip** when `ExpDLL.dll` is unavailable.
+Runtime: **Windows only** for real DLL use. CI runs on Windows only; integration tests **skip** when `ExpDLL.dll` is unavailable.
 
 ## Reference headers (local dev, not in git)
 
@@ -51,7 +51,7 @@ Shared parsing lives in [`scripts/_header_enums.py`](scripts/_header_enums.py).
 
 ## uv workflow
 
-[uv](https://docs.astral.sh/uv/) is the recommended dev tool (see `.python-version` for local Python, typically 3.12; package supports 3.8+).
+[uv](https://docs.astral.sh/uv/) is the recommended dev tool (see `.python-version` for local Python, typically 3.12; package supports 3.10+).
 
 ```bash
 uv sync
@@ -70,7 +70,7 @@ Install for end users: `pip install Expedition-Python` (PyPI). Editable dev inst
 
 | Workflow | Trigger | Role |
 |----------|---------|------|
-| [`.github/workflows/test.yml`](.github/workflows/test.yml) | push/PR to `main`, releases | Matrix: Ubuntu, macOS, Windows × Python 3.8–12. `uv sync`, `uv build`, install wheel, `pytest`. Real DLL tests only when Expedition is present on Windows. |
+| [`.github/workflows/test.yml`](.github/workflows/test.yml) | push/PR to `main`, releases | Matrix: Windows × Python 3.10–12. `uv sync`, `uv build`, install wheel, `pytest`, plus lint checks (`black`, `isort`, `ruff`, `mypy`). |
 | Same file, `lint` job | push/PR to `main` | `black --check`, `isort --check`, `ruff check`, `mypy` (mypy may fail without blocking). |
 | [`.github/workflows/version.yml`](.github/workflows/version.yml) | push to `main` | Auto-increment patch in `version.py`, commit, tag `vX.Y.Z`, push. |
 | [`.github/workflows/publish.yml`](.github/workflows/publish.yml) | GitHub release **published** | Run tests, `uv build`, publish to PyPI (trusted publishing). |

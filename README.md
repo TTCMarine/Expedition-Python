@@ -79,7 +79,7 @@ Please ensure your code follows the project's style guidelines and includes test
 
 ### Requirements
 
-- Python 3.8 or higher (3.12 recommended for local development; see `.python-version`)
+- Python 3.10 or higher (3.12 recommended for local development; see `.python-version`)
 - [uv](https://docs.astral.sh/uv/) for development (optional but recommended)
 - For Windows: Expedition software installed
 
