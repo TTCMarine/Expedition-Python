@@ -1,13 +1,14 @@
 import ctypes
 import os
-from ctypes import POINTER, c_bool, c_char_p, c_double, c_int16, c_uint16
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
-
-from .enums import SysBooleanVar, SysVar, Var
+from ctypes import c_int16, c_double, c_uint16, c_char_p, c_bool, POINTER
+from typing import List, Tuple, Union, Dict, Optional
+from .enums import Var, SysVar, SysBooleanVar
 
 EXPEDITION_DLL_REG_KEY = r"SOFTWARE\Expedition\Core"
-# Boat index used when reading MagVar via set_boat_position (boat 0 cannot read Lat/Lon).
+
+# Boat index used when reading MagVar via set_boat_position
+# boat 0 cannot always read Lat/Lon due to GPS source selection
 _VARIATION_SCRATCH_BOAT = 2
 _OLE_DATE_EPOCH = datetime(1899, 12, 30)
 
