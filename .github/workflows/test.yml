@@ -36,10 +36,23 @@ jobs:
       - name: Install package
         run: uv pip install (Get-ChildItem dist -Filter *.whl | Select-Object -First 1 -ExpandProperty FullName)
 
+      - name: Run tests with coverage (primary report)
+        if: matrix.python-version == '3.12'
+        run: uv run pytest tests/ -v --cov=Expedition --cov-report=xml
+        # Tests will be automatically skipped when DLL is not available.
+        # This run also generates coverage.xml for Codecov upload.
+
       - name: Run tests
+        if: matrix.python-version != '3.12'
         run: uv run pytest tests/ -v
-        # Tests will be automatically skipped on non-Windows or when DLL is not available
-        # Skipped tests are considered successful, so no continue-on-error needed
+        # Skipped tests are considered successful, so no continue-on-error needed.
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
 
   lint:
     runs-on: windows-latest

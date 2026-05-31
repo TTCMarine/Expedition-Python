@@ -1,5 +1,13 @@
 # Expedition-Python
 
+[![Tests](https://github.com/TTCMarine/Expedition-Python/actions/workflows/test.yml/badge.svg)](https://github.com/TTCMarine/Expedition-Python/actions/workflows/test.yml)
+[![Publish](https://github.com/TTCMarine/Expedition-Python/actions/workflows/publish.yml/badge.svg)](https://github.com/TTCMarine/Expedition-Python/actions/workflows/publish.yml)
+[![Versioning](https://github.com/TTCMarine/Expedition-Python/actions/workflows/version.yml/badge.svg)](https://github.com/TTCMarine/Expedition-Python/actions/workflows/version.yml)
+[![Coverage](https://codecov.io/gh/TTCMarine/Expedition-Python/branch/main/graph/badge.svg)](https://codecov.io/gh/TTCMarine/Expedition-Python)
+[![PyPI version](https://img.shields.io/pypi/v/Expedition-Python)](https://pypi.org/project/Expedition-Python/)
+[![Python versions](https://img.shields.io/pypi/pyversions/Expedition-Python)](https://pypi.org/project/Expedition-Python/)
+[![License](https://img.shields.io/github/license/TTCMarine/Expedition-Python)](https://github.com/TTCMarine/Expedition-Python/blob/main/LICENSE)
+
 ## Description
 
 Expedition is a Windows-based software application for sailing navigation and racing. It has been used in multiple Volvo
