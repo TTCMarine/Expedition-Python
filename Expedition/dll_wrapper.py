@@ -1,6 +1,6 @@
 import ctypes
 import os
-from ctypes import POINTER, c_bool, c_char_p, c_double, c_int16, c_uint16
+from ctypes import POINTER, c_bool, c_char_p, c_double, c_int, c_ubyte, c_uint16
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -62,29 +62,42 @@ class ExpeditionDLL:
         self.exp_dll = ctypes.windll.LoadLibrary(dll_path)
 
         # Define return types and argument types for the functions
-        self.exp_dll.GetExpVarNum.argtypes = [POINTER(c_int16)]
-        self.exp_dll.GetExpVarNum.restype = c_int16
-        self.exp_dll.GetExpVarName.argtypes = [c_int16, ctypes.c_char_p]
-        self.exp_dll.SetExpUserVarName.argtypes = [c_int16, ctypes.c_char_p]
-        self.exp_dll.SetExpVar.argtypes = [c_int16, c_double, c_uint16]
-        self.exp_dll.GetExpVar.argtypes = [c_int16, POINTER(c_double), c_uint16, POINTER(c_int16)]
+        self.exp_dll.GetExpVarNum.argtypes = []
+        self.exp_dll.GetExpVarNum.restype = c_int
+        self.exp_dll.GetExpVarName.argtypes = [c_uint16, POINTER(ctypes.c_char)]
+        self.exp_dll.SetExpUserVarName.argtypes = [c_uint16, c_char_p]
+        self.exp_dll.SetVarPrecision.argtypes = [c_uint16, c_uint16]
+        self.exp_dll.GetVarPrecision.argtypes = [c_uint16, POINTER(c_uint16)]
+        self.exp_dll.SetExpVar.argtypes = [c_uint16, c_double, c_uint16]
+        self.exp_dll.GetExpVar.argtypes = [c_uint16, POINTER(c_double), c_uint16, POINTER(c_uint16)]
         self.exp_dll.GetExpVar.restype = c_bool
-        self.exp_dll.SetExpVars.argtypes = [POINTER(c_int16), POINTER(c_double), c_int16, c_uint16]
-        self.exp_dll.GetExpVars.argtypes = [POINTER(c_int16), POINTER(c_double), c_int16, c_uint16]
+        self.exp_dll.SetExpVars.argtypes = [
+            POINTER(c_uint16),
+            POINTER(c_double),
+            c_uint16,
+            c_uint16,
+        ]
+        self.exp_dll.GetExpVars.argtypes = [
+            POINTER(c_uint16),
+            POINTER(c_double),
+            c_uint16,
+            c_uint16,
+        ]
         self.exp_dll.GetExpVars.restype = c_bool
-        self.exp_dll.GetSysVar.argtypes = [c_int16, POINTER(c_double)]
+        self.exp_dll.GetSysVar.argtypes = [c_uint16, POINTER(c_double)]
         self.exp_dll.GetSysVar.restype = c_bool
-        self.exp_dll.GetSysBool.argtypes = [c_int16, POINTER(c_bool)]
+        self.exp_dll.GetSysBool.argtypes = [c_uint16, POINTER(c_bool)]
         self.exp_dll.GetSysBool.restype = c_bool
-        self.exp_dll.GetBoatNum.argtypes = [POINTER(c_int16)]
+        self.exp_dll.GetBoatNum.argtypes = []
+        self.exp_dll.GetBoatNum.restype = c_int
         self.exp_dll.SetBoatName.argtypes = [c_uint16, c_char_p]
         self.exp_dll.GetBoatColour.argtypes = [
             c_uint16,
-            POINTER(c_uint16),
-            POINTER(c_uint16),
-            POINTER(c_uint16),
+            POINTER(c_ubyte),
+            POINTER(c_ubyte),
+            POINTER(c_ubyte),
         ]
-        self.exp_dll.SetBoatColour.argtypes = [c_uint16, c_uint16, c_uint16, c_uint16]
+        self.exp_dll.SetBoatColour.argtypes = [c_uint16, c_ubyte, c_ubyte, c_ubyte]
         self.exp_dll.GetVariation.argtypes = [
             ctypes.c_double,
             c_double,
@@ -92,7 +105,11 @@ class ExpeditionDLL:
             POINTER(c_double),
         ]
         self.exp_dll.GetVariation.restype = c_bool
-        self.exp_dll.GetAisDangerousCPA.argtypes = [POINTER(c_bool), ctypes.c_wchar_p]
+        self.exp_dll.GetAisDangerousCPA.argtypes = [
+            POINTER(c_bool),
+            POINTER(ctypes.c_wchar),
+            c_uint16,
+        ]
         self.exp_dll.SetMOB.argtypes = [c_double, c_double]
         self.exp_dll.PingMark.argtypes = [c_char_p, c_double, c_double, c_bool]
         self.exp_dll.CreateActiveRoute.argtypes = [c_char_p, c_bool]
@@ -105,9 +122,7 @@ class ExpeditionDLL:
         Get the number of Expedition variables
         :return: The number of Expedition variables
         """
-        num = c_int16()
-        count = self.exp_dll.GetExpVarNum(ctypes.byref(num))
-        return int(count)
+        return int(self.exp_dll.GetExpVarNum())
 
     def get_exp_var_name(self, var: Var) -> str:
         """
@@ -116,7 +131,7 @@ class ExpeditionDLL:
         :return: the name of the variable
         """
         name = ctypes.create_string_buffer(16)
-        self.exp_dll.GetExpVarName(c_int16(var), name)
+        self.exp_dll.GetExpVarName(c_uint16(int(var)), name)
         return name.value.decode("utf-8")
 
     def set_exp_user_var_name(self, var: Var, name):
@@ -131,9 +146,33 @@ class ExpeditionDLL:
             raise ValueError("name must be 16 characters or less")
 
         if (0 <= var <= 31) or (Var.User0 <= var <= Var.User31):
-            self.exp_dll.SetExpUserVarName(c_int16(var), name.encode("utf-8"))
+            self.exp_dll.SetExpUserVarName(c_uint16(int(var)), name.encode("utf-8"))
         else:
             raise ValueError("var must be between 0 and 31 or between Var.User0 and Var.User31")
+
+    def set_var_precision(self, var: Var, precision: int):
+        """
+        Set precision for a user variable.
+        :param var: variable id (0-31 or Var.User0-Var.User31)
+        :param precision: decimal precision
+        :return: None
+        """
+        if (0 <= var <= 31) or (Var.User0 <= var <= Var.User31):
+            self.exp_dll.SetVarPrecision(c_uint16(int(var)), c_uint16(precision))
+        else:
+            raise ValueError("var must be between 0 and 31 or between Var.User0 and Var.User31")
+
+    def get_var_precision(self, var: Var) -> int:
+        """
+        Get precision for a user variable.
+        :param var: variable id (0-31 or Var.User0-Var.User31)
+        :return: precision value
+        """
+        if not ((0 <= var <= 31) or (Var.User0 <= var <= Var.User31)):
+            raise ValueError("var must be between 0 and 31 or between Var.User0 and Var.User31")
+        precision = c_uint16()
+        self.exp_dll.GetVarPrecision(c_uint16(int(var)), ctypes.byref(precision))
+        return int(precision.value)
 
     def set_exp_var_value(self, var: Var, value: float, boat=0):
         """
@@ -142,7 +181,7 @@ class ExpeditionDLL:
         :param value: the value to set
         :param boat: the boat number to set the variable for (default 0)
         """
-        self.exp_dll.SetExpVar(c_int16(var), c_double(value), c_uint16(boat))
+        self.exp_dll.SetExpVar(c_uint16(int(var)), c_double(value), c_uint16(boat))
 
     def set_exp_var_by_name(self, name: str, value: float, boat=0):
         """
@@ -155,7 +194,7 @@ class ExpeditionDLL:
             var_id = Var[name]
         except KeyError:
             raise ValueError(f"Variable name '{name}' not found")
-        self.exp_dll.SetExpVar(c_int16(var_id), c_double(value), c_uint16(boat))
+        self.exp_dll.SetExpVar(c_uint16(int(var_id)), c_double(value), c_uint16(boat))
 
     def get_exp_var_value(self, var: Var, boat=0) -> Optional[float]:
         """
@@ -165,9 +204,9 @@ class ExpeditionDLL:
         :return: value of the variable
         """
         value = c_double()
-        age = c_int16()
+        id_alt = c_uint16()
         valid = self.exp_dll.GetExpVar(
-            c_int16(var), ctypes.byref(value), c_uint16(boat), ctypes.byref(age)
+            c_uint16(int(var)), ctypes.byref(value), c_uint16(boat), ctypes.byref(id_alt)
         )
         if valid:
             return value.value
@@ -183,9 +222,9 @@ class ExpeditionDLL:
         """
         var_id = Var[name]
         value = c_double()
-        age = c_int16()
+        id_alt = c_uint16()
         valid = self.exp_dll.GetExpVar(
-            c_int16(var_id), ctypes.byref(value), c_uint16(boat), ctypes.byref(age)
+            c_uint16(int(var_id)), ctypes.byref(value), c_uint16(boat), ctypes.byref(id_alt)
         )
         if valid:
             return value.value
@@ -201,9 +240,9 @@ class ExpeditionDLL:
         """
         if len(var_list) != len(value_list):
             raise ValueError("vars and values must be the same length")
-        var_array = (c_int16 * len(var_list))(*var_list)
+        var_array = (c_uint16 * len(var_list))(*(int(v) for v in var_list))
         value_array = (c_double * len(value_list))(*value_list)
-        self.exp_dll.SetExpVars(var_array, value_array, c_int16(len(var_list)), c_uint16(boat))
+        self.exp_dll.SetExpVars(var_array, value_array, c_uint16(len(var_list)), c_uint16(boat))
 
     def get_exp_vars(self, var_list: List[Var], boat=0) -> Optional[List[float]]:
         """
@@ -212,10 +251,10 @@ class ExpeditionDLL:
         :param boat: boat number to get the variables for (default 0)
         :return: list of values
         """
-        var_array = (c_int16 * len(var_list))(*var_list)
+        var_array = (c_uint16 * len(var_list))(*(int(v) for v in var_list))
         value_array = (c_double * len(var_list))()
         valid = self.exp_dll.GetExpVars(
-            var_array, value_array, c_int16(len(var_list)), c_uint16(boat)
+            var_array, value_array, c_uint16(len(var_list)), c_uint16(boat)
         )
         if valid:
             return list(value_array)
@@ -253,7 +292,7 @@ class ExpeditionDLL:
         :return: value
         """
         value = c_double()
-        valid = self.exp_dll.GetSysVar(c_int16(var), ctypes.byref(value))
+        valid = self.exp_dll.GetSysVar(c_uint16(int(var)), ctypes.byref(value))
         if valid:
             return value.value
         else:
@@ -266,7 +305,7 @@ class ExpeditionDLL:
         :return: value
         """
         value = c_bool()
-        valid = self.exp_dll.GetSysBool(c_int16(var), ctypes.byref(value))
+        valid = self.exp_dll.GetSysBool(c_uint16(int(var)), ctypes.byref(value))
         if valid:
             return value.value
         else:
@@ -277,9 +316,7 @@ class ExpeditionDLL:
         Get the number of boats in the Expedition
         :return: maximum boat number
         """
-        num = c_int16()
-        self.exp_dll.GetBoatNum(ctypes.byref(num))
-        return num.value
+        return int(self.exp_dll.GetBoatNum())
 
     def set_boat_name(self, boat: int, name: str):
         """
@@ -288,6 +325,8 @@ class ExpeditionDLL:
         :param name:
         :return:
         """
+        if len(name) > 32:
+            raise ValueError("name must be 32 characters or less")
         self.exp_dll.SetBoatName(c_uint16(boat), name.encode("utf-8"))
 
     def get_boat_colour(self, boat: int) -> Tuple[int, int, int]:
@@ -296,9 +335,9 @@ class ExpeditionDLL:
         :param boat:
         :return: r, g, b colour values
         """
-        r = c_uint16()
-        g = c_uint16()
-        b = c_uint16()
+        r = c_ubyte()
+        g = c_ubyte()
+        b = c_ubyte()
         self.exp_dll.GetBoatColour(
             c_uint16(boat), ctypes.byref(r), ctypes.byref(g), ctypes.byref(b)
         )
@@ -313,7 +352,17 @@ class ExpeditionDLL:
         :param b: blue
         :return:
         """
-        self.exp_dll.SetBoatColour(c_uint16(boat), c_uint16(r), c_uint16(g), c_uint16(b))
+        self.exp_dll.SetBoatColour(c_uint16(boat), c_ubyte(r), c_ubyte(g), c_ubyte(b))
+
+    def get_ais_dangerous_cpa(self) -> Tuple[bool, str]:
+        """
+        Get dangerous AIS CPA state and target name.
+        :return: tuple (dangerous, target_name)
+        """
+        dangerous = c_bool()
+        name = ctypes.create_unicode_buffer(32)
+        self.exp_dll.GetAisDangerousCPA(ctypes.byref(dangerous), name, c_uint16(len(name)))
+        return bool(dangerous.value), name.value
 
     def set_boat_position(self, boat: int, lat_lon: Tuple[float, float]):
         """

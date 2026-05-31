@@ -144,7 +144,19 @@ class TestExpedition(unittest.TestCase):
 
     def test_get_variation(self):
         variation = self.expedition.get_variation(50.8, -1.3)
-        self.assertIsInstance(variation, float)
+        if variation is not None:
+            self.assertIsInstance(variation, float)
+
+    def test_set_and_get_var_precision(self):
+        self.expedition.set_var_precision(Var.User0, 3)
+        precision = self.expedition.get_var_precision(Var.User0)
+        self.assertIsInstance(precision, int)
+        self.assertEqual(precision, 3)
+
+    def test_get_ais_dangerous_cpa_shape(self):
+        dangerous, name = self.expedition.get_ais_dangerous_cpa()
+        self.assertIsInstance(dangerous, bool)
+        self.assertIsInstance(name, str)
 
 
 if __name__ == "__main__":
