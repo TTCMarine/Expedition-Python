@@ -17,8 +17,11 @@ This copies from your Expedition install directory (registry `HKCU\SOFTWARE\Expe
 | `ExpDLL.h` | Yes — DLL API for [`Expedition/dll_wrapper.py`](../Expedition/dll_wrapper.py) |
 | `user_channels.h` | Yes — `ExChannels` / `Var` |
 | `sys_channels.h` | Yes — `ExSysChannels`, `ExSysBooleanChannels`, `ExSysIntChannels` |
+| `sys_val.h` | Optional — `ExVal` layout for `SetExpVar2` / `GetExpVar2` (not always shipped) |
 
 The `reference/expedition/` directory is listed in [`.gitignore`](../.gitignore).
+
+After syncing headers, review `ExpDLL.h` exports and update [`Expedition/dll_wrapper.py`](../Expedition/dll_wrapper.py) if the API changed.
 
 ## Regenerating and checking Python enums
 

@@ -1,9 +1,8 @@
-from enum import Enum, IntEnum, auto
+from enum import Enum, auto, IntEnum
 
 
 class SysVar(IntEnum):
     """Enumeration of system variables."""
-
     BoatLength = 0
     BowToGps = auto()
     BoatWidth = auto()
@@ -20,6 +19,8 @@ class SysVar(IntEnum):
     HoldTws = auto()
     HoldSet = auto()
     HoldDrift = auto()
+    LogBsp = auto()
+    LogSog = auto()
     ValNumPersistent = auto()
     WandLat0 = auto()
     WandLon0 = auto()
@@ -29,10 +30,6 @@ class SysVar(IntEnum):
     WandLon2 = auto()
     WandLat3 = auto()
     WandLon3 = auto()
-    Wand0 = auto()
-    Wand1 = auto()
-    Wand2 = auto()
-    Wand3 = auto()
     LaserLat = auto()
     LaserLon = auto()
     PrevMarkLat = auto()
@@ -40,7 +37,6 @@ class SysVar(IntEnum):
     LegRng = auto()
     LegBrgM = auto()
     LegBrgT = auto()
-    StartTime = auto()
     StartRSDist = auto()
     StartRSLatL = auto()
     StartRSLonL = auto()
@@ -58,10 +54,6 @@ class SysVar(IntEnum):
     AboveLine = auto()
     StartDistToPort = auto()
     StartDistToStrb = auto()
-    MouseTime = auto()
-    MouseTimeP = auto()
-    MouseTimeS = auto()
-    MouseTimePolar = auto()
     MouseBearing = auto()
     MouseRange = auto()
     GateLat = auto()
@@ -78,11 +70,6 @@ class SysVar(IntEnum):
     CalLeeway = auto()
     CalAccel = auto()
     CalRot = auto()
-    TimeLogPlayer = auto()
-    TimeTests = auto()
-    TimeEvents = auto()
-    AisAgeLimit = auto()
-    TimeGpsYYMMDD = auto()
     GSpotLat = auto()
     GSpotLon = auto()
     XteLat = auto()
@@ -91,7 +78,6 @@ class SysVar(IntEnum):
     RemoteLinePortLon = auto()
     RemoteLineStrbLat = auto()
     RemoteLineStrbLon = auto()
-    TestStartTime = auto()
     DisplayNorth = auto()
     DisplaySouth = auto()
     DisplayEast = auto()
@@ -100,9 +86,8 @@ class SysVar(IntEnum):
     NumSysChannels = auto()
 
 
-class SysBooleanVar(IntEnum):
+class SysBooleanVar(Enum):
     """Enumeration of system boolean variables."""
-
     lAutoPan = 0
     lLocalTime = auto()
     lAutoPalette = auto()
@@ -168,7 +153,6 @@ class SysBooleanVar(IntEnum):
 
 class SysIntVar(Enum):
     """Enumeration of system integer variables."""
-
     Theme = 0
     Depth = auto()
     Speed = auto()
@@ -187,7 +171,6 @@ class SysIntVar(Enum):
 
 class Var(IntEnum):
     """Enumeration of Expedition variables."""
-
     Utc = 0
     Bsp = auto()
     Awa = auto()

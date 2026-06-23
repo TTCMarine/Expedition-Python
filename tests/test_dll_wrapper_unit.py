@@ -2,7 +2,8 @@ import ctypes
 from unittest import TestCase
 from unittest.mock import patch
 
-from Expedition import ExpeditionDLL, Var
+from Expedition import ExpeditionAPIError, ExpeditionDLL, ExVal, Var
+from Expedition.exval import ExValStruct
 
 
 class FakeCFunction:
@@ -24,9 +25,10 @@ def _to_int(value):
     return int(value.value) if hasattr(value, "value") else int(value)
 
 
-class FakeExpDLL:
+class _FakeExpDLLBase:
     def __init__(self):
         self.vars = {}
+        self.ex_vals = {}
         self.var_precision = {}
         self.boat_names = {}
         self.boat_colours = {}
@@ -36,37 +38,22 @@ class FakeExpDLL:
         self.GetExpVarNum = FakeCFunction(return_value=606)
         self.GetExpVarName = FakeCFunction(impl=self._get_exp_var_name)
         self.SetExpUserVarName = FakeCFunction()
-        self.SetVarPrecision = FakeCFunction(impl=self._set_var_precision)
-        self.GetVarPrecision = FakeCFunction(impl=self._get_var_precision)
         self.SetExpVar = FakeCFunction(impl=self._set_exp_var)
         self.GetExpVar = FakeCFunction(impl=self._get_exp_var)
-        self.SetExpVars = FakeCFunction(impl=self._set_exp_vars)
-        self.GetExpVars = FakeCFunction(impl=self._get_exp_vars)
         self.GetSysVar = FakeCFunction(impl=self._get_sys_var)
         self.GetSysBool = FakeCFunction(impl=self._get_sys_bool)
         self.GetBoatNum = FakeCFunction(return_value=64)
-        self.SetBoatName = FakeCFunction(impl=self._set_boat_name)
-        self.GetBoatColour = FakeCFunction(impl=self._get_boat_colour)
-        self.SetBoatColour = FakeCFunction(impl=self._set_boat_colour)
-        self.GetVariation = FakeCFunction(impl=self._get_variation)
-        self.GetAisDangerousCPA = FakeCFunction(impl=self._get_ais_dangerous_cpa)
         self.SetMOB = FakeCFunction()
-        self.PingMark = FakeCFunction()
-        self.CreateActiveRoute = FakeCFunction()
-        self.AddMarkToActiveRoute = FakeCFunction()
 
     def _get_exp_var_name(self, var_id, name_buf):
         var_name = "User0" if _to_int(var_id) == int(Var.User0) else "Bsp"
         name_buf.value = var_name.encode("utf-8")
 
-    def _set_var_precision(self, var_id, precision):
-        self.var_precision[_to_int(var_id)] = _to_int(precision)
-
-    def _get_var_precision(self, var_id, precision_out):
-        precision_out._obj.value = self.var_precision.get(_to_int(var_id), 0)
-
     def _set_exp_var(self, var_id, value, boat):
-        self.vars[(_to_int(var_id), _to_int(boat))] = float(value.value)
+        key = (_to_int(var_id), _to_int(boat))
+        self.vars[key] = float(value.value)
+        if key in self.ex_vals:
+            self.ex_vals[key] = ExVal(value=self.vars[key], time=self.ex_vals[key].time)
 
     def _get_exp_var(self, var_id, value_out, boat, id_alt_out):
         key = (_to_int(var_id), _to_int(boat))
@@ -75,6 +62,37 @@ class FakeExpDLL:
         value_out._obj.value = self.vars[key]
         id_alt_out._obj.value = _to_int(var_id)
         return True
+
+    def _get_sys_var(self, var_id, value_out):
+        value_out._obj.value = 12.5
+        return True
+
+    def _get_sys_bool(self, var_id, value_out):
+        value_out._obj.value = True
+        return True
+
+
+class FakeLegacyExpDLL(_FakeExpDLLBase):
+    def __init__(self):
+        super().__init__()
+        self.SetVarPrecision = FakeCFunction(impl=self._set_var_precision)
+        self.GetVarPrecision = FakeCFunction(impl=self._get_var_precision)
+        self.SetExpVars = FakeCFunction(impl=self._set_exp_vars)
+        self.GetExpVars = FakeCFunction(impl=self._get_exp_vars)
+        self.SetBoatName = FakeCFunction(impl=self._set_boat_name)
+        self.GetBoatColour = FakeCFunction(impl=self._get_boat_colour)
+        self.SetBoatColour = FakeCFunction(impl=self._set_boat_colour)
+        self.GetVariation = FakeCFunction(impl=self._get_variation)
+        self.GetAisDangerousCPA = FakeCFunction(impl=self._get_ais_dangerous_cpa)
+        self.PingMark = FakeCFunction()
+        self.CreateActiveRoute = FakeCFunction()
+        self.AddMarkToActiveRoute = FakeCFunction()
+
+    def _set_var_precision(self, var_id, precision):
+        self.var_precision[_to_int(var_id)] = _to_int(precision)
+
+    def _get_var_precision(self, var_id, precision_out):
+        precision_out._obj.value = self.var_precision.get(_to_int(var_id), 0)
 
     def _set_exp_vars(self, var_ids, values, n_vals, boat):
         count = _to_int(n_vals)
@@ -90,14 +108,6 @@ class FakeExpDLL:
             if key not in self.vars:
                 return False
             values_out[index] = self.vars[key]
-        return True
-
-    def _get_sys_var(self, var_id, value_out):
-        value_out._obj.value = 12.5
-        return True
-
-    def _get_sys_bool(self, var_id, value_out):
-        value_out._obj.value = True
         return True
 
     def _set_boat_name(self, boat, name):
@@ -121,15 +131,49 @@ class FakeExpDLL:
         name_buf.value = self.ais_name
 
 
-class TestDLLWrapperUnit(TestCase):
+class FakeV12ExpDLL(_FakeExpDLLBase):
+    def __init__(self):
+        super().__init__()
+        self.SetExpVar2 = FakeCFunction(impl=self._set_exp_var2)
+        self.GetExpVar2 = FakeCFunction(impl=self._get_exp_var2)
+
+    def _set_exp_var2(self, var_id, value, boat):
+        key = (_to_int(var_id), _to_int(boat))
+        if isinstance(value, ExValStruct):
+            ex_val = ExVal.from_struct(value)
+        else:
+            ex_val = ExVal(value=float(value.value), time=int(value.time))
+        self.ex_vals[key] = ex_val
+        self.vars[key] = ex_val.value
+
+    def _get_exp_var2(self, var_id, value_out, boat, id_alt_out):
+        key = (_to_int(var_id), _to_int(boat))
+        if key not in self.ex_vals:
+            return False
+        value_out._obj.time = self.ex_vals[key].time
+        value_out._obj.value = self.ex_vals[key].value
+        id_alt_out._obj.value = _to_int(var_id)
+        return True
+
+
+def _make_expedition(fake_dll):
+    windll = type("FakeWindll", (), {"LoadLibrary": lambda _, __: fake_dll})()
+    with (
+        patch("os.path.exists", return_value=True),
+        patch.object(ctypes, "windll", windll, create=True),
+    ):
+        return ExpeditionDLL("C:/fake")
+
+
+class TestDLLWrapperLegacy(TestCase):
     def setUp(self):
-        self.fake_dll = FakeExpDLL()
-        self.windll = type("FakeWindll", (), {"LoadLibrary": lambda _, __: self.fake_dll})()
-        with (
-            patch("os.path.exists", return_value=True),
-            patch.object(ctypes, "windll", self.windll, create=True),
-        ):
-            self.expedition = ExpeditionDLL("C:/fake")
+        self.fake_dll = FakeLegacyExpDLL()
+        self.expedition = _make_expedition(self.fake_dll)
+
+    def test_api_version_is_legacy(self):
+        self.assertEqual(self.expedition.api_version, "legacy")
+        self.assertTrue(self.expedition.has_batch_vars)
+        self.assertFalse(self.expedition.has_exp_var2)
 
     def test_ctypes_signatures_match_header(self):
         self.assertEqual(self.fake_dll.GetExpVarNum.argtypes, [])
@@ -167,7 +211,6 @@ class TestDLLWrapperUnit(TestCase):
         value = self.expedition.get_exp_var_value(Var.Bsp, boat=2)
         self.assertEqual(value, 9.7)
 
-        # Fourth arg must be a uint16 out pointer (idAlt).
         get_call = self.fake_dll.GetExpVar.calls[-1]
         self.assertIsInstance(get_call[3]._obj, ctypes.c_uint16)
 
@@ -178,3 +221,59 @@ class TestDLLWrapperUnit(TestCase):
     def test_boat_name_length_validation(self):
         with self.assertRaises(ValueError):
             self.expedition.set_boat_name(1, "x" * 33)
+
+    def test_batch_vars_use_dll_exports(self):
+        self.expedition.set_exp_vars([Var.User0, Var.User1], [1.0, 2.0])
+        self.assertEqual(len(self.fake_dll.SetExpVars.calls), 1)
+        self.assertEqual(len(self.fake_dll.SetExpVar.calls), 0)
+
+
+class TestDLLWrapperV12(TestCase):
+    def setUp(self):
+        self.fake_dll = FakeV12ExpDLL()
+        self.expedition = _make_expedition(self.fake_dll)
+
+    def test_api_version_is_1_2(self):
+        self.assertEqual(self.expedition.api_version, "1.2")
+        self.assertFalse(self.expedition.has_batch_vars)
+        self.assertTrue(self.expedition.has_exp_var2)
+
+    def test_batch_vars_fallback_to_single_exports(self):
+        self.expedition.set_exp_vars([Var.User0, Var.User1, Var.User2], [0, 1, 2])
+        self.assertEqual(len(self.fake_dll.SetExpVar.calls), 3)
+        values = self.expedition.get_exp_vars([Var.User0, Var.User1, Var.User2])
+        self.assertEqual(values, [0, 1, 2])
+        self.assertEqual(len(self.fake_dll.GetExpVar.calls), 3)
+
+    def test_boat_position_uses_single_var_fallback(self):
+        self.expedition.set_boat_position(1, (50.8, -1.3))
+        position = self.expedition.get_boat_position(1)
+        self.assertEqual(position, (50.8, -1.3))
+
+    def test_removed_apis_raise_expedition_api_error(self):
+        for method, args in (
+            (self.expedition.set_var_precision, (Var.User0, 3)),
+            (self.expedition.get_var_precision, (Var.User0,)),
+            (self.expedition.set_boat_name, (1, "boat")),
+            (self.expedition.get_boat_colour, (1,)),
+            (self.expedition.set_boat_colour, (1, 0, 0, 0)),
+            (self.expedition.get_ais_dangerous_cpa, ()),
+            (self.expedition.ping_mark, ("mark", 1.0, 2.0, False)),
+            (self.expedition.create_active_route, ("route",)),
+            (self.expedition.add_mark_to_active_route, ("mark", 1.0, 2.0)),
+        ):
+            with self.subTest(method=method.__name__):
+                with self.assertRaises(ExpeditionAPIError):
+                    method(*args)
+
+    def test_exp_var2_round_trip(self):
+        self.expedition.set_exp_var2(Var.User0, ExVal(value=12.5, time=99))
+        result = self.expedition.get_exp_var2(Var.User0)
+        self.assertEqual(result, ExVal(value=12.5, time=99))
+        self.assertEqual(len(self.fake_dll.SetExpVar2.calls), 1)
+        self.assertEqual(len(self.fake_dll.GetExpVar2.calls), 1)
+
+    def test_get_variation_uses_magvar_fallback(self):
+        self.expedition.set_exp_var_value(Var.MagVar, 3.25, boat=2)
+        variation = self.expedition.get_variation(50.8, -1.3)
+        self.assertEqual(variation, 3.25)

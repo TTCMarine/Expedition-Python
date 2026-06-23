@@ -1,34 +1,29 @@
 import os
-import platform
 import sys
 import unittest
 
-from Expedition import ExpeditionDLL, SysVar, Var
+from Expedition import ExpeditionAPIError, ExpeditionDLL, SysVar, Var
 
 EXPEDITION_INSTALL_64_PATH = "C:\\Program Files\\Expedition\\Expedition"
 EXPEDITION_INSTALL_32_PATH = "C:\\Program Files (x86)\\Expedition\\Expedition"
+EXPEDITION_X_PATH = "C:\\Program Files\\Expedition\\ExpeditionX"
 
 # Check if we're on Windows and if Expedition DLL is available
 IS_WINDOWS = sys.platform == "win32"
 DLL_AVAILABLE = False
 
 if IS_WINDOWS:
-    # Try to find the DLL in common installation paths
-    for path in [EXPEDITION_INSTALL_64_PATH, EXPEDITION_INSTALL_32_PATH]:
+    for path in [EXPEDITION_X_PATH, EXPEDITION_INSTALL_64_PATH, EXPEDITION_INSTALL_32_PATH]:
         dll_path = os.path.join(path, "ExpDLL.dll")
         if os.path.exists(dll_path):
             DLL_AVAILABLE = True
             break
-    # Also try from_default_location (but catch all exceptions)
     if not DLL_AVAILABLE:
         try:
-            # This might fail due to registry access or DLL loading
             exp = ExpeditionDLL.from_default_location()
             DLL_AVAILABLE = True
-            # Clean up the instance
             del exp
         except Exception:
-            # Any exception means DLL is not available
             pass
 
 
@@ -46,19 +41,20 @@ class TestExpedition(unittest.TestCase):
                 "Expedition DLL not found. Install Expedition or set up mock implementation."
             )
         else:
-            # Try to create an instance
             try:
-                # First try from_default_location
                 cls.expedition = ExpeditionDLL.from_default_location()
             except (FileNotFoundError, OSError, ImportError):
-                # Fall back to hardcoded paths
-                try:
-                    architecture = platform.architecture()[0]
-                    if architecture == "64bit":
-                        cls.expedition = ExpeditionDLL(EXPEDITION_INSTALL_64_PATH)
-                    else:
-                        cls.expedition = ExpeditionDLL(EXPEDITION_INSTALL_32_PATH)
-                except (FileNotFoundError, OSError):
+                for path in (
+                    EXPEDITION_X_PATH,
+                    EXPEDITION_INSTALL_64_PATH,
+                    EXPEDITION_INSTALL_32_PATH,
+                ):
+                    try:
+                        cls.expedition = ExpeditionDLL(path)
+                        break
+                    except (FileNotFoundError, OSError):
+                        continue
+                if cls.expedition is None:
                     cls.skip_reason = "Could not initialize ExpeditionDLL"
 
     def setUp(self):
@@ -71,13 +67,10 @@ class TestExpedition(unittest.TestCase):
     def test_number_of_vars(self):
         no_of_channels = self.expedition.number_of_vars
         self.assertIsInstance(no_of_channels, int)
-        # On real DLL, this should match Var.NumChannels
-        # On mock, it might be different, so just check it's an int
         if DLL_AVAILABLE and IS_WINDOWS:
             self.assertEqual(no_of_channels, Var.NumChannels)
 
     def test_get_exp_var_name(self):
-        # Test a few variables instead of all to avoid long test times
         test_vars = [Var.Bsp, Var.Lat, Var.Lon, Var.Awa, Var.Aws]
         for var in test_vars:
             var_name = self.expedition.get_exp_var_name(var)
@@ -101,18 +94,21 @@ class TestExpedition(unittest.TestCase):
 
     def test_get_sys_var(self):
         boat_length = self.expedition.get_sys_var(SysVar.BoatLength)
-        # On real DLL, this should be a float (could be None if invalid)
-        # On mock, it might return None or a value
         if boat_length is not None:
             self.assertIsInstance(boat_length, float)
 
+    @unittest.skipUnless(
+        IS_WINDOWS and DLL_AVAILABLE,
+        "Requires legacy ExpDLL with boat colour exports",
+    )
     def test_set_and_get_boat_colour(self):
+        if self.expedition.api_version != "legacy":
+            self.skipTest("GetBoatColour not exported on ExpDLL API 1.2")
         self.expedition.set_boat_colour(0, 0, 0, 0)
         colour = self.expedition.get_boat_colour(0)
         self.assertEqual(colour, (0, 0, 0))
 
     def test_set_and_get_boat_position(self):
-        # Boat 0 is own-ship GPS; Lat/Lon are not readable via the DLL on boat 0.
         boat = 1
         self.expedition.set_boat_position(boat, (50.8, -1.3))
         position = self.expedition.get_boat_position(boat)
@@ -147,16 +143,48 @@ class TestExpedition(unittest.TestCase):
         if variation is not None:
             self.assertIsInstance(variation, float)
 
+    @unittest.skipUnless(
+        IS_WINDOWS and DLL_AVAILABLE,
+        "Requires legacy ExpDLL with var precision exports",
+    )
     def test_set_and_get_var_precision(self):
+        if self.expedition.api_version != "legacy":
+            self.skipTest("SetVarPrecision not exported on ExpDLL API 1.2")
         self.expedition.set_var_precision(Var.User0, 3)
         precision = self.expedition.get_var_precision(Var.User0)
         self.assertIsInstance(precision, int)
         self.assertEqual(precision, 3)
 
+    @unittest.skipUnless(
+        IS_WINDOWS and DLL_AVAILABLE,
+        "Requires legacy ExpDLL with AIS CPA export",
+    )
     def test_get_ais_dangerous_cpa_shape(self):
+        if self.expedition.api_version != "legacy":
+            self.skipTest("GetAisDangerousCPA not exported on ExpDLL API 1.2")
         dangerous, name = self.expedition.get_ais_dangerous_cpa()
         self.assertIsInstance(dangerous, bool)
         self.assertIsInstance(name, str)
+
+    @unittest.skipUnless(
+        IS_WINDOWS and DLL_AVAILABLE,
+        "Requires ExpDLL API 1.2",
+    )
+    def test_exp_var2_on_v12_dll(self):
+        if not self.expedition.has_exp_var2:
+            self.skipTest("SetExpVar2 not exported on this ExpDLL")
+        from Expedition import ExVal
+
+        self.expedition.set_exp_var2(Var.User0, ExVal(value=7.5, time=0))
+        result = self.expedition.get_exp_var2(Var.User0)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.value, 7.5)
+
+    def test_legacy_only_api_raises_on_v12(self):
+        if self.expedition.api_version == "legacy":
+            self.skipTest("Legacy-only error checks require ExpDLL API 1.2")
+        with self.assertRaises(ExpeditionAPIError):
+            self.expedition.set_var_precision(Var.User0, 3)
 
 
 if __name__ == "__main__":

@@ -103,6 +103,8 @@ uv run python scripts/check_enums_against_headers.py
 
 Headers are copied to `reference/expedition/` (gitignored). Enums in [`Expedition/enums.py`](Expedition/enums.py) are generated from those headers (see [`CHANGELOG.md`](CHANGELOG.md) for 2.0 breaking renames). See [`reference/README.md`](reference/README.md) and [`AGENTS.md`](AGENTS.md).
 
+The wrapper supports both legacy ExpDLL and Expedition **API 1.2** (ExpeditionX): batch var helpers fall back to single-var calls when needed; auxiliary APIs such as boat colour, marks, and AIS CPA require a legacy DLL.
+
 ### Running Tests
 
 After `uv sync`, run tests with:
