@@ -1,8 +1,9 @@
-from enum import Enum, auto, IntEnum
+from enum import Enum, IntEnum, auto
 
 
 class SysVar(IntEnum):
     """Enumeration of system variables."""
+
     BoatLength = 0
     BowToGps = auto()
     BoatWidth = auto()
@@ -88,6 +89,7 @@ class SysVar(IntEnum):
 
 class SysBooleanVar(Enum):
     """Enumeration of system boolean variables."""
+
     lAutoPan = 0
     lLocalTime = auto()
     lAutoPalette = auto()
@@ -153,6 +155,7 @@ class SysBooleanVar(Enum):
 
 class SysIntVar(Enum):
     """Enumeration of system integer variables."""
+
     Theme = 0
     Depth = auto()
     Speed = auto()
@@ -171,6 +174,7 @@ class SysIntVar(Enum):
 
 class Var(IntEnum):
     """Enumeration of Expedition variables."""
+
     Utc = 0
     Bsp = auto()
     Awa = auto()

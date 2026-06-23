@@ -428,7 +428,7 @@ class ExpeditionDLL:
         :return: value
         """
         value = c_bool()
-        valid = self._GetSysBool(c_uint16(int(var)), ctypes.byref(value))
+        valid = self._GetSysBool(c_uint16(var.value), ctypes.byref(value))
         if valid:
             return value.value
         else:
