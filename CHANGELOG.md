@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.2.0
+
+Breaking release: `ExVal` now matches the real `sys_val.h` layout and `e_ValType` discriminator.
+
+### Changed
+
+- `ExValStruct` is `int8_t type` + 8-byte union (`bool`, `double`, `int32`, WinRT `int64` ticks, `char[8]`), not the previous guessed `{time, value}` layout.
+- `ExVal(value=, time=)` removed. Use typed factories: `ExVal.from_double()`, `ExVal.from_datetime()`, `ExVal.from_ticks()`, `ExVal.from_timedelta()`, etc.
+- Time values use **WinRT 100ns ticks** since 1601-01-01 UTC (`e_Int64` / union member `t`), not OLE DATE.
+- New `ValType` enum mirrors `e_ValType` (`Bool`, `Double`, `Int32`, `Int64`, `String`).
+- WinRT conversion helpers: `datetime_to_winrt_ticks`, `winrt_ticks_to_datetime`, `timedelta_to_winrt_ticks`, `winrt_ticks_to_timedelta`.
+
+### Notes
+
+- Expedition currently uses `e_Double` for most channels and `e_Int64` for time instants and spans; other types are defined for future use.
+
 ## 2.1.0
 
 Minor release: support Expedition **EXP_API_VERSION 1.2** (ExpeditionX) while keeping compatibility with legacy ExpDLL installs.

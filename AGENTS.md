@@ -28,7 +28,7 @@ uv run python scripts/check_enums_against_headers.py
 - Headers live under `reference/expedition/` (gitignored). See [`reference/README.md`](reference/README.md).
 - **Do not commit** headers or bundle them in the wheel.
 - `CoreMem.h` is not shipped with Expedition; channel layout comes from `user_channels.h` / `sys_channels.h`.
-- After an Expedition upgrade: sync headers → `generate_enums_from_headers.py --write` → check-enums → review `ExpDLL.h` exports → update `dll_wrapper.py` if needed → run tests.
+- After an Expedition upgrade: sync headers → `generate_enums_from_headers.py --write` → check-enums → review `ExpDLL.h` exports → verify `ValType` in [`Expedition/exval.py`](Expedition/exval.py) against `e_ValType` if `sys_val.h` / `time_dev.h` changed → update `dll_wrapper.py` if needed → run tests.
 
 ### Enum naming (2.0+)
 

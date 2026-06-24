@@ -175,10 +175,10 @@ class TestExpedition(unittest.TestCase):
             self.skipTest("SetExpVar2 not exported on this ExpDLL")
         from Expedition import ExVal
 
-        self.expedition.set_exp_var2(Var.User0, ExVal(value=7.5, time=0))
+        self.expedition.set_exp_var2(Var.User0, ExVal.from_double(7.5))
         result = self.expedition.get_exp_var2(Var.User0)
         self.assertIsNotNone(result)
-        self.assertEqual(result.value, 7.5)
+        self.assertEqual(result.as_double(), 7.5)
 
     def test_legacy_only_api_raises_on_v12(self):
         if self.expedition.api_version == "legacy":

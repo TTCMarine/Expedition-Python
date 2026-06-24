@@ -1,9 +1,10 @@
 import ctypes
+from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import patch
 
-from Expedition import ExpeditionAPIError, ExpeditionDLL, ExVal, Var
-from Expedition.exval import ExValStruct
+from Expedition import ExpeditionAPIError, ExpeditionDLL, ExVal, ValType, Var
+from Expedition.exval import ExValStruct, datetime_to_winrt_ticks, winrt_ticks_to_datetime
 
 
 class FakeCFunction:
@@ -52,8 +53,6 @@ class _FakeExpDLLBase:
     def _set_exp_var(self, var_id, value, boat):
         key = (_to_int(var_id), _to_int(boat))
         self.vars[key] = float(value.value)
-        if key in self.ex_vals:
-            self.ex_vals[key] = ExVal(value=self.vars[key], time=self.ex_vals[key].time)
 
     def _get_exp_var(self, var_id, value_out, boat, id_alt_out):
         key = (_to_int(var_id), _to_int(boat))
@@ -142,16 +141,19 @@ class FakeV12ExpDLL(_FakeExpDLLBase):
         if isinstance(value, ExValStruct):
             ex_val = ExVal.from_struct(value)
         else:
-            ex_val = ExVal(value=float(value.value), time=int(value.time))
+            ex_val = ExVal.from_struct(value)
         self.ex_vals[key] = ex_val
-        self.vars[key] = ex_val.value
+        if ex_val.type is ValType.Double:
+            self.vars[key] = ex_val.as_double()
 
     def _get_exp_var2(self, var_id, value_out, boat, id_alt_out):
         key = (_to_int(var_id), _to_int(boat))
         if key not in self.ex_vals:
             return False
-        value_out._obj.time = self.ex_vals[key].time
-        value_out._obj.value = self.ex_vals[key].value
+        stored = self.ex_vals[key].to_struct()
+        dest = value_out._obj
+        dest.type = stored.type
+        dest.u = stored.u
         id_alt_out._obj.value = _to_int(var_id)
         return True
 
@@ -267,11 +269,26 @@ class TestDLLWrapperV12(TestCase):
                     method(*args)
 
     def test_exp_var2_round_trip(self):
-        self.expedition.set_exp_var2(Var.User0, ExVal(value=12.5, time=99))
+        self.expedition.set_exp_var2(Var.User0, ExVal.from_double(12.5))
         result = self.expedition.get_exp_var2(Var.User0)
-        self.assertEqual(result, ExVal(value=12.5, time=99))
+        self.assertEqual(result, ExVal.from_double(12.5))
         self.assertEqual(len(self.fake_dll.SetExpVar2.calls), 1)
         self.assertEqual(len(self.fake_dll.GetExpVar2.calls), 1)
+
+    def test_exval_struct_size(self):
+        self.assertEqual(ctypes.sizeof(ExValStruct), 16)
+
+    def test_winrt_datetime_round_trip(self):
+        dt = datetime(2024, 6, 15, 12, 30, 0, tzinfo=timezone.utc)
+        ticks = datetime_to_winrt_ticks(dt)
+        restored = winrt_ticks_to_datetime(ticks)
+        self.assertEqual(restored, dt)
+
+    def test_exp_var2_int64_round_trip(self):
+        ticks = datetime_to_winrt_ticks(datetime(2024, 1, 1, tzinfo=timezone.utc))
+        self.expedition.set_exp_var2(Var.User1, ExVal.from_ticks(ticks))
+        result = self.expedition.get_exp_var2(Var.User1)
+        self.assertEqual(result, ExVal.from_ticks(ticks))
 
     def test_get_variation_uses_magvar_fallback(self):
         self.expedition.set_exp_var_value(Var.MagVar, 3.25, boat=2)

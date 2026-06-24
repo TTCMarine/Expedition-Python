@@ -274,6 +274,7 @@ class ExpeditionDLL:
         """
         Set a channel value using ExpDLL 1.2 SetExpVar2 (typed ExVal).
 
+        Pass ``ExVal.from_double(...)``, ``ExVal.from_datetime(...)``, etc.
         Requires ExpDLL API 1.2+.
         """
         self._require_export(self.has_exp_var2, "SetExpVar2", "set_exp_var2")

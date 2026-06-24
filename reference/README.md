@@ -17,7 +17,9 @@ This copies from your Expedition install directory (registry `HKCU\SOFTWARE\Expe
 | `ExpDLL.h` | Yes — DLL API for [`Expedition/dll_wrapper.py`](../Expedition/dll_wrapper.py) |
 | `user_channels.h` | Yes — `ExChannels` / `Var` |
 | `sys_channels.h` | Yes — `ExSysChannels`, `ExSysBooleanChannels`, `ExSysIntChannels` |
-| `sys_val.h` | Optional — `ExVal` layout for `SetExpVar2` / `GetExpVar2` (not always shipped) |
+| `sys_val.h` | Optional — `ExVal` layout for `SetExpVar2` / `GetExpVar2` |
+
+`e_ValType` values (`Bool`, `Double`, `Int32`, `Int64`, `String`) are defined in Expedition's `time_dev.h`; the Python `ValType` enum in [`Expedition/exval.py`](../Expedition/exval.py) must stay aligned if that header changes.
 
 The `reference/expedition/` directory is listed in [`.gitignore`](../.gitignore).
 
