@@ -23,3 +23,10 @@ Expedition.errors
 .. automodule:: Expedition.errors
    :members:
    :show-inheritance:
+
+Expedition.protocol
+-------------------
+
+.. automodule:: Expedition.protocol
+   :members:
+   :show-inheritance:

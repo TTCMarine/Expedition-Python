@@ -1,5 +1,30 @@
 # Changelog
 
+## 3.1.0
+
+Minor release: a pure-Python simple-protocol module, exact time arithmetic, and safer variation and read paths. One behaviour change in `get_variation` may need a code change; see below.
+
+### Added
+
+- **`Expedition.protocol`** (new module, no I/O, runs on macOS and Linux). It provides:
+  - `checksum`, `frame`, `parse_sentence`, `is_ack`, `parse_licence` and `parse_stream` for the simple protocol's framing, checksums and replies.
+  - Typed builders for the gun, start line, marks, routes, events, sails and system commands. Each returns framed bytes and raises `ValueError` for bad arguments.
+  - `Sentence` and `StreamSentence` dataclasses.
+- **`ExpeditionProtocolError`** (a `ValueError`) for malformed protocol text.
+- **`tests/fake_expdll.py`**: the fake DLL moved out of the unit tests. It models `SetExpVar2` storage, alternating channels (`alt_map`), the boat 0 GPS gate (`gps_from_dll`) and a not-running state (`running`). `tests/conftest.py` provides the `make_fake_expedition` fixture.
+- CI: a `protocol` job runs the protocol and fake-DLL tests on Ubuntu. An optional `integration` job runs `tests/test_expedition.py` on a self-hosted Windows runner with Expedition installed, when the repository variable `EXPEDITION_INTEGRATION` is `"true"`.
+
+### Changed
+
+- **`get_variation` no longer writes to the scratch boat by default.** Without the `GetVariation` export (ExpDLL API 1.2), it raises `ExpeditionAPIError` unless you pass `allow_scratch_boat=True`. Previously it silently wrote Lat/Lon to boat 2 and restored them. The docstring now describes the side effect.
+- **`get_exp_var_value` uses `GetExpVar2` on ExpDLL API 1.2.** It returns the same double as before, so callers see no difference.
+- **WinRT ticks use exact integer arithmetic.** Converting datetimes and timedeltas to and from 100 ns ticks no longer goes through floats. Previously a value could be off by up to 400 ns.
+
+### Documentation
+
+- The README no longer describes a mock DLL. The package has none.
+- New `docs/protocol.rst` page covering the simple protocol, its limits, the Expedition filter settings it needs, and the items not yet verified against a running Expedition.
+
 ## 3.0.0
 
 Breaking release: enum IDs now match the November Expedition headers, invalid arguments raise `ValueError` instead of being sent to the DLL, and there is an opt-in strict mode. This is a clean break: there are no deprecated aliases for the renamed members.

@@ -4,6 +4,7 @@ from .errors import (  # noqa: F401
     ExpeditionAPIError,
     ExpeditionLoadError,
     ExpeditionNotRunningError,
+    ExpeditionProtocolError,
     ExpeditionVersionWarning,
     ExpeditionWriteError,
     ExpeditionWriteWarning,

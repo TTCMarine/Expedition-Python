@@ -40,10 +40,24 @@ Alternatively, you can use pip: `pip install -e .`
 
 ### Platform Support
 
-- **Windows**: Full support with the Expedition DLL
-- **macOS/Linux**: Mock implementation available for development and testing (see note below)
+- **Windows**: Full support. `ExpeditionDLL` loads the Expedition DLL.
+- **macOS/Linux**: The `Expedition.protocol` module works, for building and checking Expedition's simple-protocol messages. `ExpeditionDLL` cannot load ExpDLL here, so DLL code has to run on Windows.
 
-> **Note for macOS/Linux users:** On non-Windows platforms, the package installs a mock implementation that allows you to develop and test code without the actual Expedition DLL. All methods are available but return dummy values. This is useful for developing code that will run on Windows.
+> **Note for macOS/Linux users:** The package has no mock DLL. The test suite uses a fake ExpDLL in `tests/fake_expdll.py`, which is a test helper and is not installed with the package. The unit tests for it and for `Expedition.protocol` run on any platform.
+
+## Simple protocol
+
+`Expedition.protocol` builds and checks Expedition's text-based simple protocol. It does no I/O, so you send the bytes over your own socket:
+
+```python
+from Expedition import protocol
+
+packet = protocol.gun_set(12.34)  # b"#G,12.34*62\r\n"
+# sock.sendall(packet); reply = sock.recv(256)
+assert protocol.is_ack(reply, packet)
+```
+
+It covers the gun, start line, marks, routes, events, sails and system commands. See [docs/protocol.rst](docs/protocol.rst) for the full list, the limits and the Expedition settings the protocol needs.
 
 ## Usage
 

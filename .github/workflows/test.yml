@@ -76,6 +76,56 @@ jobs:
       - name: Run unit tests
         run: uv run pytest tests/ -v
 
+  protocol:
+    # Pure Python: the simple-protocol module and the fake-DLL unit tests need no Windows and no
+    # Expedition install, so they run on Linux as well.
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run protocol and fake-DLL tests
+        run: uv run pytest tests/test_protocol.py tests/test_fake_expdll.py tests/test_dll_wrapper_unit.py -v
+
+  integration:
+    # Optional. Runs only when the repository variable EXPEDITION_INTEGRATION is "true", on a
+    # self-hosted Windows runner labelled "expedition" with Expedition installed. Set
+    # EXPEDITION_DLL_DIR to the build folder under test (for example ExpeditionARM).
+    if: vars.EXPEDITION_INTEGRATION == 'true'
+    runs-on: [self-hosted, windows, expedition]
+
+    env:
+      EXPEDITION_DLL_DIR: ${{ vars.EXPEDITION_DLL_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run integration tests against a running Expedition
+        run: uv run pytest tests/test_expedition.py -v
+
   lint:
     runs-on: windows-latest
     steps:

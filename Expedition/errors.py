@@ -17,6 +17,13 @@ class ExpeditionWriteError(RuntimeError):
     """Raised in strict mode when a value written to Expedition does not read back."""
 
 
+class ExpeditionProtocolError(ValueError):
+    """Raised when simple-protocol text is malformed, or a command argument is invalid.
+
+    It is a ValueError, so callers that already catch bad input need no change.
+    """
+
+
 class ExpeditionWriteWarning(UserWarning):
     """Warns that Expedition is likely to ignore a write, e.g. a GPS channel on boat 0."""
 

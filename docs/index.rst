@@ -22,6 +22,7 @@ Contents:
 
    installation
    usage
+   protocol
    api
 
 Indices and tables
