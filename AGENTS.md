@@ -14,7 +14,18 @@ A Python **ctypes** wrapper around Expedition’s `ExpDLL.dll` for sailing navig
 | Tests | [`tests/test_expedition.py`](tests/test_expedition.py) |
 | User docs (Sphinx) | [`docs/`](docs/), built via [`readthedocs.yaml`](readthedocs.yaml) |
 
-Runtime: **Windows only** for real DLL use. CI runs on Windows only; integration tests **skip** when `ExpDLL.dll` is unavailable.
+Runtime: **Windows only** for real DLL use. CI runs unit tests on Windows (AMD64, Python 3.10–3.12) and on native ARM64 Windows (`windows-11-arm`). Unit tests fake the DLL and build PE headers in memory, so they need no Expedition install. Integration tests in `tests/test_expedition.py` **skip** unless Expedition is running.
+
+## Two Expedition builds
+
+The install ships two complete builds in subfolders:
+
+| Folder | ExpDLL.dll PE machine | Companion libcrypto | Python needed |
+|---|---|---|---|
+| `ExpeditionARM/` | ARM64 (0xAA64) | `libcrypto-3-arm64.dll` | native ARM64 Python |
+| `ExpeditionX64/` | AMD64 (0x8664) | `libcrypto-3-x64.dll` | AMD64 Python (runs under emulation on ARM64 Windows) |
+
+Both export the same API and use the same channel IDs. `ExpDLL.h` is identical in both. `ExpeditionDLL` checks the DLL's PE machine type against the interpreter before `LoadLibrary` (`Expedition/_loader.py`). `from_default_location()` uses the registry, which points at whichever build was registered last, so pass the build folder explicitly when both are installed. Integration tests take the folder from `EXPEDITION_DLL_DIR`.
 
 ## Reference headers (local dev, not in git)
 
@@ -26,13 +37,14 @@ uv run python scripts/check_enums_against_headers.py
 ```
 
 - Headers live under `reference/expedition/` (gitignored). See [`reference/README.md`](reference/README.md).
+- The scripts are stdlib-only, so `python3 scripts/...` works without `uv`. Example: `python3 scripts/sync_expedition_headers.py --install-dir "C:\...\ExpeditionX64"` (either build folder works, since the headers are identical).
 - **Do not commit** headers or bundle them in the wheel.
 - `CoreMem.h` is not shipped with Expedition; channel layout comes from `user_channels.h` / `sys_channels.h`.
 - After an Expedition upgrade: sync headers → `generate_enums_from_headers.py --write` → check-enums → review `ExpDLL.h` exports → verify `ValType` in [`Expedition/exval.py`](Expedition/exval.py) against `e_ValType` if `sys_val.h` / `time_dev.h` changed → update `dll_wrapper.py` if needed → run tests.
 
 ### Enum naming (2.0+)
 
-Python enum members use **mechanical** names from the C headers (no override tables):
+Python enum members use **mechanical** names from the C headers (no override tables). `SysBooleanVar` and `SysIntVar` are `IntEnum`s. Generated `enums.py` must be black-clean, and `tests/test_enums_against_headers.py` checks the committed file against a fresh generator run whenever headers are synced:
 
 | C enum | Strip prefix | Example |
 |--------|--------------|---------|
@@ -70,7 +82,7 @@ Install for end users: `pip install Expedition-Python` (PyPI). Editable dev inst
 
 | Workflow | Trigger | Role |
 |----------|---------|------|
-| [`.github/workflows/test.yml`](.github/workflows/test.yml) | push/PR to `main`, releases | Matrix: Windows × Python 3.10–12. `uv sync`, `uv build`, install wheel, `pytest`, plus lint checks (`black`, `isort`, `ruff`, `mypy`). |
+| [`.github/workflows/test.yml`](.github/workflows/test.yml) | push/PR to `main`, releases | Matrix: Windows × Python 3.10–12. `uv sync`, `uv build`, install wheel, `pytest`. Job `unit-arm64` runs unit tests on `windows-11-arm`. Job `lint` runs `black`, `isort`, `ruff`, `mypy`. |
 | Same file, `lint` job | push/PR to `main` | `black --check`, `isort --check`, `ruff check`, `mypy` (mypy may fail without blocking). |
 | [`.github/workflows/version.yml`](.github/workflows/version.yml) | push to `main` | Auto-increment patch in `version.py`, commit, tag `vX.Y.Z`, push. |
 | [`.github/workflows/publish.yml`](.github/workflows/publish.yml) | GitHub release **published** | Run tests, `uv build`, publish to PyPI (trusted publishing). |
@@ -88,6 +100,11 @@ Releases: merging to `main` bumps version via Actions; creating/publishing a Git
 
 ## Testing notes
 
+- Setting `EXPEDITION_DLL_DIR` selects the build for integration tests. Leave it unset to use the registry location.
+- `ExpeditionDLL(..., strict=True)` raises `ExpeditionNotRunningError` when Expedition is not running. It also reads back every write and raises `ExpeditionWriteError` on a mismatch. Use it when debugging writes that are silently dropped.
+- Argument validation runs in Python before any DLL call. Bad IDs, boats, names and colours raise `ValueError`. Channel count and boat count are read once at load time.
+- The Utc-based `is_running()` check, the GPS source value (3) and the static GPS flag table are inferred. Verify them on Windows before relying on them.
+
 - `ExpeditionDLL.from_default_location()` uses registry `HKCU\SOFTWARE\Expedition\Core\Location`.
 - Boat `0` is own-ship GPS; lat/lon via DLL on boat 0 may be unavailable (see tests using boat 2 for variation).
 - Skipped tests on CI are expected, not failures.
@@ -95,8 +112,8 @@ Releases: merging to `main` bumps version via Actions; creating/publishing a Git
 ## Quick file map
 
 ```
-Expedition/           # installable package
-scripts/              # header sync, enum generate/check (dev only)
+Expedition/           # installable package (dll_wrapper, _loader PE checks, errors, enums, exval)
+scripts/              # header sync, enum generate/check (dev only, not in the wheel)
 reference/expedition/ # synced .h files (gitignored)
 tests/
 docs/

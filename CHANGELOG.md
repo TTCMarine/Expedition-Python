@@ -1,5 +1,50 @@
 # Changelog
 
+## 3.0.0
+
+Breaking release: enum IDs now match the November Expedition headers, invalid arguments raise `ValueError` instead of being sent to the DLL, and there is an opt-in strict mode. This is a clean break: there are no deprecated aliases for the renamed members.
+
+### Breaking changes
+
+- **Channel IDs shifted.** `Var.NumChannels` is 418 (was 414). Code that stores raw integer IDs must be updated.
+- **`Var` additions:** `BowLat` (414), `BowLon` (415), `SternLat` (416), `SternLon` (417), `AltMax` (alias of `Alt9`) and `UserMax` (alias of `User31`).
+- **`Var` rename:** `ExSysGpsTimeDelta` is now `SysGpsTimeDelta` (256).
+- **`Var` rename:** `EXCANFastPacketErrors` is now `CANFastPacketErrors`.
+- **`SysVar` removals:** `BowLat`, `BowLon`, `SternLat` and `SternLon` were removed from `SysVar`, so every member from `PrevMarkBrg` onward moved down by 4 (for example `CalTwa` is now 57, was 61). `SysVar.NumSysChannels` is 76 (was 80).
+- **`SysBooleanVar` renames:** the stray `l` prefix is removed (`lAutoPan` is now `AutoPan`, `lMax` is now `Max`, and so on). Values are unchanged.
+- **`SysBooleanVar` and `SysIntVar` are now `IntEnum`** (were `Enum`), so members compare and convert as integers. `.value` still works.
+- **User variable names are limited to 15 bytes** (was 16). Names are encoded in the ANSI code page on Windows (`mbcs`) and as ASCII elsewhere.
+- **`set_exp_user_var_name` and `set_var_precision` / `get_var_precision`** reject channels that are not user variables. Previously `Var.Bsp` (value 1) was accepted and renamed `User1`.
+- **Bad arguments raise `ValueError`** before anything reaches the DLL: channel IDs outside the range for the loaded DLL, boats outside `0..get_number_of_boats()-1`, system variable IDs outside range, colour components outside 0..255, and unknown channel names. `get_exp_var_value_by_name` previously raised `KeyError` for unknown names; it now raises `ValueError`, like the setter.
+- **Writing to `Var.Utc`** raises `ValueError`, because the DLL ignores that write.
+- **Load failures** raise `ExpeditionLoadError` (an `OSError` subclass) with an explanation, instead of a raw `OSError`. This covers the wrong bitness or architecture, a missing companion `libcrypto` DLL (WinError 126), and a registry lookup failure.
+
+### Added
+
+- **Two Expedition builds are supported:** `ExpeditionARM/` (ARM64 DLL) and `ExpeditionX64/` (AMD64 DLL). `ExpeditionDLL` reads the PE machine type of `ExpDLL.dll` and checks it against the Python interpreter before loading. ARM64 DLLs need native ARM64 Python. AMD64 DLLs need AMD64 Python, which runs under emulation on ARM64 Windows.
+- **Strict mode:** `ExpeditionDLL(folder, strict=True)` and `ExpeditionDLL.from_default_location(strict=True)`. In strict mode, writes raise `ExpeditionNotRunningError` when Expedition is not running, and writes that do not read back raise `ExpeditionWriteError`. Default behaviour is unchanged.
+- `ExpeditionDLL.is_running()`: a best-effort check that reads `Var.Utc`. Not documented by Expedition, so treat it as a heuristic.
+- `ExpeditionDLL.get_exp_var_ex(var, boat)` returns `ExpVarReading(value, resolved_var)`. `resolved_var` shows which channel supplied the value for `Alt0` to `Alt9`.
+- `GPS_BOAT0_CHANNELS`: writes to these channels on boat 0 emit `ExpeditionWriteWarning`. Expedition ignores them unless the GPS source is set to the DLL.
+- `ExpeditionVersionWarning` when `GetExpVarNum()` does not match `Var.NumChannels`. This means the installed Expedition and this package were built against different headers.
+- `Expedition.errors` module with `ExpeditionAPIError`, `ExpeditionLoadError`, `ExpeditionNotRunningError`, `ExpeditionWriteError`, `ExpeditionWriteWarning` and `ExpeditionVersionWarning`.
+- Development scripts in `scripts/`: `sync_expedition_headers.py`, `generate_enums_from_headers.py` and `check_enums_against_headers.py`. These are not shipped in the wheel.
+- `py.typed` is now included in the package.
+
+### Changed
+
+- The DLL export counts (`number_of_vars`, `get_number_of_boats()`) are read once at load time instead of on every call.
+- `ExpeditionDLL.from_default_location()` raises `ExpeditionLoadError` when Expedition is not registered or the registry value is missing.
+- Expedition's registry entry points at whichever build was registered last. If both builds are installed, pass the build folder to `ExpeditionDLL(...)` explicitly.
+
+### Migration
+
+1. Replace integer channel IDs with `Var` members, or regenerate any saved IDs.
+2. Rename `ExSysGpsTimeDelta`, `EXCANFastPacketErrors`, `lAutoPan` and similar members (see above).
+3. Keep user variable names to 15 bytes or fewer.
+4. Catch `ValueError` where you previously relied on the DLL silently ignoring bad input.
+5. Use `strict=True` during development to find writes that Expedition drops.
+
 ## 2.2.0
 
 Breaking release: `ExVal` now matches the real `sys_val.h` layout and `e_ValType` discriminator.

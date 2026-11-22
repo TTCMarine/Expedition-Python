@@ -53,7 +53,7 @@ Changelog = "https://github.com/TTCMarine/Expedition-Python/releases"
 packages = ["Expedition"]
 
 [tool.setuptools.package-data]
-"*" = ["py.typed"]
+Expedition = ["py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "Expedition.__version__"}

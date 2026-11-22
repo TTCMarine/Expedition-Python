@@ -52,8 +52,16 @@ class.
 This method will attempt to locate the Expedition DLL file and create an instance of the ExpeditionDLL. This relies on
 the installation directory being in a registry key, so it may not work for all installations.
 
-> **_Note on 64 vs 32-bit:_**
-> If you are using a 32-bit version of Expedition, then you need to use a 32-bit version of Python.
+> **_Architecture must match:_**
+> Expedition ships two builds. `ExpeditionARM/` contains an ARM64 `ExpDLL.dll` and needs native ARM64 Python.
+> `ExpeditionX64/` contains an AMD64 `ExpDLL.dll` and needs AMD64 Python (which runs under emulation on ARM64 Windows).
+> Native ARM64 Python for Windows is, as far as we know, only published from Python 3.11, so use 3.11 or later for
+> `ExpeditionARM`. This has not been checked on a Windows machine yet.
+> 32-bit Python cannot load either build. Expedition-Python checks the DLL's machine type against the interpreter before
+> loading and raises `ExpeditionLoadError` with a message naming the mismatch.
+>
+> `from_default_location()` uses the registry, which points at whichever build was registered last. If both builds are
+> installed, pass the build folder explicitly: `ExpeditionDLL(r"C:\Program Files\Expedition\ExpeditionARM")`.
 
 Here's a simple example of how to use the Expedition module:
 
@@ -68,6 +76,35 @@ expedition.set_exp_var_value(Var.Bsp, 10.4)
 value = expedition.get_exp_var_value(Var.Bsp)
 print(value)  # Outputs: 10.4
 ```
+
+### Strict mode
+
+By default, writes that Expedition ignores fail silently, as they do in the DLL. Pass `strict=True` while developing to
+find them:
+
+```python
+from Expedition import ExpeditionDLL, ExpeditionNotRunningError, ExpeditionWriteError, Var
+
+expedition = ExpeditionDLL.from_default_location(strict=True)
+try:
+    expedition.set_exp_var_value(Var.Bsp, 10.4)
+except ExpeditionNotRunningError:
+    print("Start Expedition first")
+except ExpeditionWriteError as err:
+    print(f"Expedition did not apply the value: {err}")
+```
+
+Strict mode checks that Expedition is running before each write and reads each value back afterwards. It adds DLL calls,
+so leave it off in production.
+
+Other behaviour to know about:
+
+- Bad arguments (channel IDs out of range for the loaded DLL, boat numbers outside `0..get_number_of_boats()-1`, unknown
+  channel names, user variable names longer than 15 bytes) raise `ValueError` before anything reaches the DLL.
+- Writes to boat 0 for GPS-derived channels (`Lat`, `Lon`, `Cog`, `Sog`, `GpsTime` and others) emit an
+  `ExpeditionWriteWarning`. Expedition drops them unless the GPS source is set to the DLL.
+- `get_exp_var_ex()` returns the value and the channel that supplied it, which matters for `Alt0`..`Alt9`.
+- `is_running()` is a best-effort check based on `Var.Utc`.
 
 ## Contributing
 
@@ -112,6 +149,10 @@ After `uv sync`, run tests with:
 ```bash
 uv run pytest tests/ -v
 ```
+
+Integration tests in `tests/test_expedition.py` need Expedition running on Windows. They skip otherwise. To point them at a
+specific build, set `EXPEDITION_DLL_DIR` to its folder (for example `ExpeditionX64`). The unit tests fake the DLL and
+run on any platform, including the `windows-11-arm` CI job.
 
 You can also use unittest: `python -m unittest discover tests`
 

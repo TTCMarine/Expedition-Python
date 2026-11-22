@@ -16,3 +16,10 @@ Expedition.enums
    :members:
    :show-inheritance:
    :undoc-members:
+
+Expedition.errors
+-----------------
+
+.. automodule:: Expedition.errors
+   :members:
+   :show-inheritance:

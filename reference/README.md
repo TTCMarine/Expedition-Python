@@ -8,6 +8,8 @@ On Windows, with Expedition installed:
 
 ```bash
 uv run python scripts/sync_expedition_headers.py
+# or, without uv (the scripts use only the standard library):
+python3 scripts/sync_expedition_headers.py --install-dir "C:\Program Files\Expedition\Expedition\ExpeditionX64"
 ```
 
 This copies from your Expedition install directory (registry `HKCU\SOFTWARE\Expedition\Core\Location`, or `EXPEDITION_INSTALL_DIR`, or common Program Files paths) into `reference/expedition/`:
@@ -18,6 +20,8 @@ This copies from your Expedition install directory (registry `HKCU\SOFTWARE\Expe
 | `user_channels.h` | Yes — `ExChannels` / `Var` |
 | `sys_channels.h` | Yes — `ExSysChannels`, `ExSysBooleanChannels`, `ExSysIntChannels` |
 | `sys_val.h` | Optional — `ExVal` layout for `SetExpVar2` / `GetExpVar2` |
+
+The install folder may be the root or either build folder (`ExpeditionARM` or `ExpeditionX64`). The two builds ship identical headers. If the headers differ between folders, the sync script stops and reports the files rather than picking one.
 
 `e_ValType` values (`Bool`, `Double`, `Int32`, `Int64`, `String`) are defined in Expedition's `time_dev.h`; the Python `ValType` enum in [`Expedition/exval.py`](../Expedition/exval.py) must stay aligned if that header changes.
 
