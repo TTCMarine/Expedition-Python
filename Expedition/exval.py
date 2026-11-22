@@ -25,7 +25,10 @@ __all__ = [
 ]
 
 WINRT_EPOCH = datetime(1601, 1, 1, tzinfo=timezone.utc)
-_TICKS_PER_SECOND = 10_000_000
+# One WinRT tick is 100 ns, so one microsecond is 10 ticks. Arithmetic is kept in integer
+# microseconds because ticks since 1601 (about 1.3e17) exceed the exact range of a float.
+_TICKS_PER_MICROSECOND = 10
+_ONE_MICROSECOND = timedelta(microseconds=1)
 
 
 class ValType(IntEnum):
@@ -55,28 +58,40 @@ class ExValStruct(Structure):
 
 
 def datetime_to_winrt_ticks(dt: datetime) -> int:
-    """Convert a datetime to WinRT 100ns ticks since 1601-01-01 UTC."""
+    """Convert a datetime to WinRT 100ns ticks since 1601-01-01 UTC.
+
+    Naive datetimes are treated as UTC. datetime has microsecond resolution, so the
+    result is always a multiple of 10 ticks.
+    """
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     else:
         dt = dt.astimezone(timezone.utc)
-    delta = dt - WINRT_EPOCH
-    return int(delta.total_seconds() * _TICKS_PER_SECOND)
+    return ((dt - WINRT_EPOCH) // _ONE_MICROSECOND) * _TICKS_PER_MICROSECOND
 
 
 def winrt_ticks_to_datetime(ticks: int) -> datetime:
-    """Convert WinRT 100ns ticks since 1601-01-01 UTC to a timezone-aware datetime."""
-    return WINRT_EPOCH + timedelta(microseconds=ticks / 10)
+    """Convert WinRT 100ns ticks since 1601-01-01 UTC to a timezone-aware datetime.
+
+    Ticks finer than one microsecond are truncated towards negative infinity.
+    """
+    return WINRT_EPOCH + timedelta(microseconds=ticks // _TICKS_PER_MICROSECOND)
 
 
 def timedelta_to_winrt_ticks(td: timedelta) -> int:
-    """Convert a timedelta to WinRT 100ns tick count (time span)."""
-    return int(td.total_seconds() * _TICKS_PER_SECOND)
+    """Convert a timedelta to WinRT 100ns tick count (time span).
+
+    timedelta has microsecond resolution, so the result is always a multiple of 10 ticks.
+    """
+    return (td // _ONE_MICROSECOND) * _TICKS_PER_MICROSECOND
 
 
 def winrt_ticks_to_timedelta(ticks: int) -> timedelta:
-    """Convert WinRT 100ns tick count to a timedelta (time span)."""
-    return timedelta(microseconds=ticks / 10)
+    """Convert WinRT 100ns tick count to a timedelta (time span).
+
+    Ticks finer than one microsecond are truncated towards negative infinity.
+    """
+    return timedelta(microseconds=ticks // _TICKS_PER_MICROSECOND)
 
 
 @dataclass(frozen=True)

@@ -94,19 +94,21 @@ class _FakeExpDLLBase:
             return
         self.vars[key] = float(value.value)
 
-    def _get_exp_var(self, var_id, value_out, boat, id_alt_out):
-        var = _to_int(var_id)
-        boat_id = _to_int(boat)
+    def _lookup(self, var, boat_id):
+        """Return ``(value, resolved_id)`` for a double read, or None if there is no value."""
         if var == int(Var.Utc) and boat_id == 0:
-            value_out._obj.value = self.utc if self.running else FAKE_INVALID
-            id_alt_out._obj.value = var
-            return True
+            return (self.utc if self.running else FAKE_INVALID), var
         resolved = self.alt_map.get(var, var)
         key = (resolved, boat_id)
         if key not in self.vars:
+            return None
+        return self.vars[key], resolved
+
+    def _get_exp_var(self, var_id, value_out, boat, id_alt_out):
+        found = self._lookup(_to_int(var_id), _to_int(boat))
+        if found is None:
             return False
-        value_out._obj.value = self.vars[key]
-        id_alt_out._obj.value = resolved
+        value_out._obj.value, id_alt_out._obj.value = found
         return True
 
     def _get_sys_var(self, var_id, value_out):
@@ -195,14 +197,23 @@ class FakeV12ExpDLL(_FakeExpDLLBase):
             self.vars[key] = ex_val.as_double()
 
     def _get_exp_var2(self, var_id, value_out, boat, id_alt_out):
-        key = (_to_int(var_id), _to_int(boat))
-        if key not in self.ex_vals:
-            return False
-        stored = self.ex_vals[key].to_struct()
+        var = _to_int(var_id)
+        boat_id = _to_int(boat)
+        key = (var, boat_id)
+        if key in self.ex_vals:
+            stored = self.ex_vals[key].to_struct()
+            resolved = var
+        else:
+            found = self._lookup(var, boat_id)
+            if found is None:
+                return False
+            # Values written through SetExpVar are doubles on the 1.2 DLL too.
+            stored = ExVal.from_double(found[0]).to_struct()
+            resolved = found[1]
         dest = value_out._obj
         dest.type = stored.type
         dest.u = stored.u
-        id_alt_out._obj.value = _to_int(var_id)
+        id_alt_out._obj.value = resolved
         return True
 
 
@@ -253,6 +264,21 @@ class TestDLLWrapperLegacy(TestCase):
         precision = self.expedition.get_var_precision(Var.User0)
         self.assertEqual(precision, 3)
 
+    def test_get_variation_uses_export_without_writing_to_boats(self):
+        writes_before = len(self.fake_dll.SetExpVar.calls) + len(self.fake_dll.SetExpVars.calls)
+        self.assertEqual(self.expedition.get_variation(50.8, -1.3), 2.75)
+        self.assertEqual(
+            len(self.fake_dll.SetExpVar.calls) + len(self.fake_dll.SetExpVars.calls),
+            writes_before,
+        )
+
+    def test_get_variation_export_without_value_returns_none_without_fallback(self):
+        # The wrapper binds the export at construction, so replace the bound callable.
+        self.expedition._GetVariation = FakeCFunction(return_value=False)
+        writes_before = len(self.fake_dll.SetExpVar.calls)
+        self.assertIsNone(self.expedition.get_variation(50.8, -1.3))
+        self.assertEqual(len(self.fake_dll.SetExpVar.calls), writes_before)
+
     def test_get_ais_dangerous_cpa_returns_expected_shape(self):
         dangerous, name = self.expedition.get_ais_dangerous_cpa()
         self.assertEqual((dangerous, name), (True, "AIS TARGET"))
@@ -296,7 +322,9 @@ class TestDLLWrapperV12(TestCase):
         self.assertEqual(len(self.fake_dll.SetExpVar.calls), 3)
         values = self.expedition.get_exp_vars([Var.User0, Var.User1, Var.User2])
         self.assertEqual(values, [0, 1, 2])
-        self.assertEqual(len(self.fake_dll.GetExpVar.calls), 3)
+        # On 1.2 the reads go through GetExpVar2, not the legacy export.
+        self.assertEqual(len(self.fake_dll.GetExpVar2.calls), 3)
+        self.assertEqual(len(self.fake_dll.GetExpVar.calls), 0)
 
     def test_boat_position_uses_single_var_fallback(self):
         self.expedition.set_boat_position(1, (50.8, -1.3))
@@ -341,10 +369,68 @@ class TestDLLWrapperV12(TestCase):
         result = self.expedition.get_exp_var2(Var.User1)
         self.assertEqual(result, ExVal.from_ticks(ticks))
 
-    def test_get_variation_uses_magvar_fallback(self):
+    def test_get_variation_without_export_raises_by_default(self):
         self.expedition.set_exp_var_value(Var.MagVar, 3.25, boat=2)
-        variation = self.expedition.get_variation(50.8, -1.3)
+        writes_before = len(self.fake_dll.SetExpVar.calls)
+        with self.assertRaises(ExpeditionAPIError):
+            self.expedition.get_variation(50.8, -1.3)
+        self.assertEqual(len(self.fake_dll.SetExpVar.calls), writes_before)
+
+    def test_get_variation_scratch_boat_fallback_when_allowed(self):
+        self.expedition.set_exp_var_value(Var.MagVar, 3.25, boat=2)
+        variation = self.expedition.get_variation(50.8, -1.3, allow_scratch_boat=True)
         self.assertEqual(variation, 3.25)
+
+    def test_get_variation_scratch_boat_restores_previous_position(self):
+        self.expedition.set_boat_position(2, (10.0, 20.0))
+        self.expedition.set_exp_var_value(Var.MagVar, 3.25, boat=2)
+        self.expedition.get_variation(50.8, -1.3, allow_scratch_boat=True)
+        self.assertEqual(self.expedition.get_boat_position(2), (10.0, 20.0))
+
+
+class TestTypedReads(TestCase):
+    """get_exp_var_value on ExpDLL 1.2 reads through GetExpVar2."""
+
+    def setUp(self):
+        self.fake_dll = FakeV12ExpDLL()
+        self.expedition = _make_expedition(self.fake_dll)
+
+    def test_double_read_uses_get_exp_var2_only(self):
+        self.expedition.set_exp_var_value(Var.Bsp, 4.5, boat=1)
+        before2 = len(self.fake_dll.GetExpVar2.calls)
+        before1 = len(self.fake_dll.GetExpVar.calls)
+        self.assertEqual(self.expedition.get_exp_var_value(Var.Bsp, boat=1), 4.5)
+        self.assertEqual(len(self.fake_dll.GetExpVar2.calls), before2 + 1)
+        self.assertEqual(len(self.fake_dll.GetExpVar.calls), before1)
+
+    def test_missing_value_returns_none(self):
+        self.assertIsNone(self.expedition.get_exp_var_value(Var.Bsp, boat=1))
+
+    def test_non_double_typed_value_falls_back_to_get_exp_var(self):
+        # An Int32 channel cannot be represented faithfully as the float this method returns,
+        # so the legacy read decides.
+        self.fake_dll.ex_vals[(int(Var.Bsp), 1)] = ExVal.from_int32(7)
+        self.fake_dll.vars[(int(Var.Bsp), 1)] = 7.0
+        before1 = len(self.fake_dll.GetExpVar.calls)
+        self.assertEqual(self.expedition.get_exp_var_value(Var.Bsp, boat=1), 7.0)
+        self.assertEqual(len(self.fake_dll.GetExpVar.calls), before1 + 1)
+
+    def test_get_exp_var_ex_reports_resolved_alternating_channel(self):
+        self.fake_dll.alt_map[int(Var.Alt0)] = int(Var.Bsp)
+        self.expedition.set_exp_var_value(Var.Bsp, 8.25, boat=1)
+        reading = self.expedition.get_exp_var_ex(Var.Alt0, boat=1)
+        self.assertEqual(reading.value, 8.25)
+        self.assertEqual(reading.resolved_var, Var.Bsp)
+
+    def test_is_running_reads_utc_through_typed_path(self):
+        self.assertTrue(self.expedition.is_running())
+        self.fake_dll.running = False
+        self.assertFalse(self.expedition.is_running())
+
+    def test_strict_readback_works_on_1_2(self):
+        expedition = _make_expedition(FakeV12ExpDLL(), strict=True)
+        expedition.set_exp_var_value(Var.Bsp, 4.0, boat=1)
+        self.assertEqual(expedition.get_exp_var_value(Var.Bsp, boat=1), 4.0)
 
 
 class TestKnownIds(TestCase):

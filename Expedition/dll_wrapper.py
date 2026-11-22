@@ -19,7 +19,7 @@ from .errors import (
     ExpeditionWriteError,
     ExpeditionWriteWarning,
 )
-from .exval import ExVal, ExValStruct
+from .exval import ExVal, ExValStruct, ValType
 
 EXPEDITION_DLL_REG_KEY = r"SOFTWARE\Expedition\Core"
 
@@ -488,6 +488,24 @@ class ExpeditionDLL:
                 )
 
     def _read_raw(self, var_id: int, boat: int) -> Optional[Tuple[float, int]]:
+        """Read a channel as ``(value, resolved_id)``, or None when there is no valid value.
+
+        On ExpDLL API 1.2 the read goes through ``GetExpVar2``, and the double it returns is
+        used directly. A typed value that is not a double (for example Int32 or Int64 ticks)
+        cannot be represented faithfully as a float here, so the legacy ``GetExpVar`` read is
+        used for those channels, as before.
+        """
+        if self.has_exp_var2:
+            struct = ExValStruct()
+            id_alt_typed = c_uint16()
+            valid = self._GetExpVar2(
+                c_uint16(var_id), ctypes.byref(struct), c_uint16(boat), ctypes.byref(id_alt_typed)
+            )
+            if not valid:
+                return None
+            if int(struct.type) == int(ValType.Double):
+                return struct.u.d, id_alt_typed.value
+
         value = c_double()
         id_alt = c_uint16()
         valid = self._GetExpVar(
@@ -600,6 +618,10 @@ class ExpeditionDLL:
     def get_exp_var_value(self, var: Var, boat=0) -> Optional[float]:
         """
         Get the value of an Expedition variable
+
+        On ExpDLL API 1.2 this uses ``GetExpVar2`` and returns the double it holds. Other
+        typed channels, and legacy DLLs, use ``GetExpVar``.
+
         :param var: enumeration of the variable
         :param boat: the boat number to get the variable for (default 0)
         :return: value of the variable, or None when Expedition has no valid value
@@ -897,13 +919,28 @@ class ExpeditionDLL:
         )
 
     def get_variation(
-        self, lat: float, lon: float, date: Optional[datetime] = None
+        self,
+        lat: float,
+        lon: float,
+        date: Optional[datetime] = None,
+        allow_scratch_boat: bool = False,
     ) -> Optional[float]:
         """
         Get magnetic variation (degrees) at a position.
 
-        Uses legacy ExpDLL GetVariation when exported; otherwise reads Var.MagVar
-        after setting position on a scratch boat (Expedition must be running).
+        Uses the ExpDLL ``GetVariation`` export when present. This export is absent on
+        ExpDLL API 1.2.
+
+        Without the export, the only other source is ``Var.MagVar`` on a scratch boat. That
+        route writes Lat/Lon to boat 2 and restores the previous position afterwards, so it
+        has side effects on a running Expedition. It is therefore used only when
+        ``allow_scratch_boat=True``; otherwise ExpeditionAPIError is raised.
+
+        :param lat: latitude in degrees
+        :param lon: longitude in degrees
+        :param date: date for the calculation (default: now)
+        :param allow_scratch_boat: permit the scratch-boat fallback described above
+        :return: variation in degrees, or None if Expedition gave no value
         """
         if self._GetVariation is not None:
             if date is None:
@@ -915,6 +952,15 @@ class ExpeditionDLL:
             )
             if success:
                 return variation.value
+            if not allow_scratch_boat:
+                return None
+        elif not allow_scratch_boat:
+            raise ExpeditionAPIError(
+                "get_variation needs the GetVariation export, which ExpDLL API 1.2 does not "
+                f"provide (API version {self.api_version}). Pass allow_scratch_boat=True to "
+                f"write the position to boat {_VARIATION_SCRATCH_BOAT} temporarily and read "
+                "Var.MagVar instead."
+            )
 
         boat = _VARIATION_SCRATCH_BOAT
         prev_position = self.get_boat_position(boat)
